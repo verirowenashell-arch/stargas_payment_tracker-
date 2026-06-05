@@ -1,0 +1,1986 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>STARGAS — Mantagbak Branch</title>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;600&family=IBM+Plex+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root {
+  --navy: #0d1b36;
+  --navy2: #162040;
+  --navy3: #1e2d52;
+  --gold: #e8a020;
+  --gold2: #f5b842;
+  --gold-dim: rgba(232,160,32,0.15);
+  --bg: #f0f2f7;
+  --surface: #ffffff;
+  --surface2: #f7f9fc;
+  --border: #dce2ef;
+  --text: #0d1b36;
+  --muted: #5e6f8a;
+  --green: #1a8a50;
+  --green-bg: #d4f0e2;
+  --amber: #c07a00;
+  --amber-bg: #fef3d0;
+  --red: #c0292a;
+  --red-bg: #fde8e8;
+  --shadow: 0 2px 12px rgba(13,27,54,0.10);
+  --shadow-lg: 0 8px 32px rgba(13,27,54,0.15);
+  --radius: 10px;
+  --font: 'IBM Plex Sans', sans-serif;
+  --mono: 'IBM Plex Mono', monospace;
+}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+body{font-family:var(--font);background:var(--bg);color:var(--text);min-height:100vh;font-size:14px}
+
+/* ── LOGIN ── */
+#loginScreen{
+  position:fixed;inset:0;z-index:1000;
+  background:linear-gradient(145deg,var(--navy) 0%,var(--navy3) 100%);
+  display:flex;align-items:center;justify-content:center;padding:1rem;
+}
+#loginScreen.hidden{display:none}
+.login-wrap{width:100%;max-width:440px}
+.login-logo{text-align:center;margin-bottom:2rem}
+.login-logo .brand{font-size:1.5rem;font-weight:700;color:var(--gold);letter-spacing:0.08em}
+.login-logo .subbrand{font-size:0.8rem;color:rgba(255,255,255,0.5);margin-top:0.25rem;letter-spacing:0.06em}
+.login-card{background:var(--surface);border-radius:14px;overflow:hidden;box-shadow:var(--shadow-lg)}
+.login-card-header{background:var(--navy2);padding:1.5rem 2rem;border-bottom:2px solid var(--gold)}
+.login-card-header h2{color:#fff;font-size:1rem;font-weight:600}
+.login-card-header p{color:rgba(255,255,255,0.5);font-size:0.8rem;margin-top:0.2rem}
+.login-card-body{padding:2rem}
+.login-field{margin-bottom:1.25rem}
+.login-field label{display:block;font-size:0.75rem;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:0.05em;margin-bottom:0.4rem}
+.login-field input,.login-field select{width:100%;padding:0.7rem 1rem;border:1.5px solid var(--border);border-radius:8px;font-size:0.9rem;font-family:var(--font);transition:border-color 0.2s}
+.login-field input:focus,.login-field select:focus{outline:none;border-color:var(--gold)}
+.login-field input.err,.login-field select.err{border-color:var(--red)}
+.login-error{font-size:0.75rem;color:var(--red);margin-top:0.3rem;display:none}
+.login-field.invalid .login-error{display:block}
+.login-field.invalid input{border-color:var(--red)}
+.login-pwd-wrap{position:relative}
+.login-pwd-wrap input{padding-right:2.5rem}
+.btn-eye{position:absolute;right:0.75rem;top:50%;transform:translateY(-50%);background:none;border:none;cursor:pointer;color:var(--muted);font-size:1rem}
+.login-btn{width:100%;padding:0.8rem;background:var(--gold);border:none;border-radius:8px;font-family:var(--font);font-size:0.95rem;font-weight:700;color:var(--navy);cursor:pointer;transition:background 0.2s;margin-top:0.5rem}
+.login-btn:hover{background:var(--gold2)}
+.login-footer{text-align:center;margin-top:1.25rem;font-size:0.75rem;color:rgba(255,255,255,0.35)}
+.locked-notice{background:rgba(192,41,42,0.15);border:1px solid var(--red);border-radius:8px;padding:0.75rem 1rem;font-size:0.8rem;color:#ff8080;margin-bottom:1rem;display:none}
+.locked-notice.show{display:block}
+
+/* ── LAYOUT ── */
+#appShell{display:flex;min-height:100vh}
+#appShell.hidden{display:none}
+.sidebar{
+  width:240px;min-width:240px;background:var(--navy);
+  display:flex;flex-direction:column;position:fixed;top:0;left:0;bottom:0;z-index:100;
+  transition:transform 0.3s;
+}
+.sb-brand{padding:1.25rem 1.25rem 1rem;border-bottom:1px solid rgba(255,255,255,0.07)}
+.sb-brand .name{font-size:0.95rem;font-weight:700;color:var(--gold);letter-spacing:0.04em}
+.sb-brand .branch{font-size:0.72rem;color:rgba(255,255,255,0.4);margin-top:0.2rem;text-transform:uppercase;letter-spacing:0.06em}
+.nav-items{flex:1;padding:0.75rem 0;overflow-y:auto}
+.nav-item{display:flex;align-items:center;gap:0.65rem;padding:0.75rem 1.25rem;color:rgba(255,255,255,0.6);cursor:pointer;font-size:0.875rem;border:none;background:none;width:100%;text-align:left;transition:all 0.15s;border-left:3px solid transparent}
+.nav-item:hover{color:#fff;background:rgba(255,255,255,0.05);border-left-color:rgba(232,160,32,0.4)}
+.nav-item.active{color:var(--gold);background:rgba(232,160,32,0.08);border-left-color:var(--gold);font-weight:600}
+.nav-item .icon{font-size:1rem;width:20px;text-align:center}
+.nav-sep{height:1px;background:rgba(255,255,255,0.07);margin:0.5rem 1.25rem}
+.sb-footer{padding:1rem 1.25rem;border-top:1px solid rgba(255,255,255,0.07)}
+.sb-user{display:flex;align-items:center;gap:0.6rem}
+.sb-avatar{width:32px;height:32px;border-radius:50%;background:var(--gold);display:flex;align-items:center;justify-content:center;font-weight:700;font-size:0.8rem;color:var(--navy);flex-shrink:0}
+.sb-uname{font-size:0.8rem;color:#fff;font-weight:600;line-height:1.2}
+.sb-urole{font-size:0.7rem;color:rgba(255,255,255,0.4)}
+.sb-signout{margin-left:auto;background:none;border:1px solid rgba(255,255,255,0.15);border-radius:6px;color:rgba(255,255,255,0.5);padding:0.25rem 0.5rem;font-size:0.7rem;cursor:pointer;transition:all 0.15s}
+.sb-signout:hover{background:rgba(192,41,42,0.3);border-color:var(--red);color:#fff}
+
+.main-wrap{margin-left:240px;flex:1;display:flex;flex-direction:column;min-height:100vh}
+.topbar{background:var(--surface);border-bottom:1px solid var(--border);padding:0.75rem 2rem;display:flex;align-items:center;justify-content:space-between;gap:1rem;position:sticky;top:0;z-index:50;box-shadow:0 1px 0 var(--border)}
+.topbar-left{display:flex;align-items:center;gap:1rem}
+.tb-title{font-weight:700;color:var(--navy);font-size:0.95rem}
+.tb-badges{display:flex;gap:0.4rem}
+.tb-badge{padding:0.2rem 0.55rem;border-radius:20px;font-size:0.72rem;font-weight:700;background:var(--red-bg);color:var(--red)}
+.tb-badge.ok{background:var(--green-bg);color:var(--green)}
+.topbar-right{display:flex;align-items:center;gap:0.75rem}
+.clock{font-family:var(--mono);font-size:0.8rem;color:var(--muted);font-weight:600}
+.menu-btn{display:none;background:var(--gold);border:none;padding:0.4rem 0.6rem;border-radius:6px;font-size:1rem;cursor:pointer;position:fixed;top:0.75rem;left:0.75rem;z-index:150}
+
+.main{flex:1;padding:1.75rem 2rem}
+.section{display:none}
+.section.active{display:block}
+
+/* ── PAGE HEADERS ── */
+.pg-header{display:flex;align-items:flex-start;justify-content:space-between;flex-wrap:wrap;gap:1rem;margin-bottom:1.5rem}
+.pg-title{font-size:1.25rem;font-weight:700;color:var(--navy);display:flex;align-items:center;gap:0.6rem}
+.pg-title::before{content:'';width:4px;height:1.25em;background:var(--gold);border-radius:2px;display:inline-block}
+
+/* ── METRICS ── */
+.metrics{display:grid;grid-template-columns:repeat(auto-fit,minmax(175px,1fr));gap:1rem;margin-bottom:1.5rem}
+.mcard{background:var(--surface);border-radius:var(--radius);padding:1.25rem;box-shadow:var(--shadow);border-top:3px solid var(--gold);position:relative;overflow:hidden}
+.mcard::after{content:'';position:absolute;right:-10px;top:-10px;width:60px;height:60px;border-radius:50%;background:var(--gold-dim)}
+.mcard .mlabel{font-size:0.72rem;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:0.04em}
+.mcard .mvalue{font-size:1.4rem;font-weight:700;margin-top:0.35rem;color:var(--navy);font-family:var(--mono)}
+.mcard.red{border-top-color:var(--red)}
+.mcard.red::after{background:rgba(192,41,42,0.08)}
+.mcard.green{border-top-color:var(--green)}
+.mcard.green::after{background:rgba(26,138,80,0.08)}
+
+/* ── CARDS ── */
+.card{background:var(--surface);border-radius:var(--radius);padding:1.25rem;box-shadow:var(--shadow);margin-bottom:1.5rem}
+.card h3{font-size:0.9rem;font-weight:700;color:var(--navy);margin-bottom:1rem;text-transform:uppercase;letter-spacing:0.04em}
+.card-row{display:grid;grid-template-columns:1fr 1fr;gap:1rem;margin-bottom:1.5rem}
+
+/* ── ALERT ── */
+.alert{border-left:4px solid var(--red);background:var(--red-bg);padding:1rem 1.25rem;border-radius:var(--radius);margin-bottom:1.5rem}
+.alert h4{color:var(--red);font-size:0.85rem;margin-bottom:0.4rem}
+.alert ul{margin-left:1.25rem;font-size:0.8rem;line-height:1.8}
+
+/* ── PROGRESS ── */
+.prog-wrap{background:#e2e8f0;border-radius:6px;height:10px;overflow:hidden;margin-top:0.4rem}
+.prog{height:100%;border-radius:6px;transition:width 0.4s}
+.prog.low{background:var(--red)}
+.prog.mid{background:var(--amber)}
+.prog.high{background:var(--green)}
+
+/* ── TABLES ── */
+.table-wrap{overflow-x:auto}
+table{width:100%;border-collapse:collapse;font-size:0.8rem}
+th{padding:0.6rem 0.75rem;background:var(--surface2);border-bottom:2px solid var(--border);font-weight:700;color:var(--navy);text-align:left;white-space:nowrap;font-size:0.75rem;text-transform:uppercase;letter-spacing:0.03em}
+td{padding:0.6rem 0.75rem;border-bottom:1px solid var(--border);color:var(--text);vertical-align:middle}
+tr:last-child td{border-bottom:none}
+tr:hover td{background:#f8fafd}
+.tr-total td{background:var(--surface2)!important;font-weight:700;border-top:2px solid var(--border)}
+.tr-overdue td{background:#fff8f8!important}
+.tr-overdue:hover td{background:#ffefef!important}
+.text-right{text-align:right}
+.text-mono{font-family:var(--mono);font-size:0.78rem}
+.no-data td{color:var(--muted);text-align:center;padding:2rem;font-size:0.8rem}
+
+/* ── BADGES ── */
+.badge{display:inline-flex;align-items:center;padding:0.2rem 0.5rem;border-radius:4px;font-size:0.7rem;font-weight:700;text-transform:uppercase;letter-spacing:0.04em}
+.b-paid{background:var(--green-bg);color:var(--green)}
+.b-partial{background:var(--amber-bg);color:var(--amber)}
+.b-unpaid{background:var(--red-bg);color:var(--red)}
+.b-role{background:var(--gold-dim);color:var(--amber)}
+.b-cashier{background:#e8eef8;color:var(--navy)}
+.b-admin{background:var(--gold-dim);color:var(--amber)}
+.b-in{background:var(--green-bg);color:var(--green)}
+.b-out{background:#f0f2f7;color:var(--muted)}
+
+/* ── BUTTONS ── */
+.btn{padding:0.45rem 0.9rem;border:none;border-radius:7px;font-family:var(--font);font-size:0.8rem;font-weight:600;cursor:pointer;transition:all 0.15s;display:inline-flex;align-items:center;gap:0.35rem}
+.btn:hover{opacity:0.88;transform:translateY(-1px)}
+.btn:active{transform:translateY(0)}
+.btn-gold{background:var(--gold);color:var(--navy)}
+.btn-navy{background:var(--navy);color:#fff}
+.btn-red{background:var(--red);color:#fff}
+.btn-ghost{background:transparent;border:1.5px solid var(--border);color:var(--text)}
+.btn-ghost:hover{border-color:var(--gold);color:var(--gold)}
+.btn-green{background:var(--green);color:#fff}
+.btn-xs{padding:0.25rem 0.5rem;font-size:0.72rem}
+.btn-sm{padding:0.35rem 0.65rem;font-size:0.75rem}
+.btn-group{display:flex;flex-wrap:wrap;gap:0.3rem}
+.toolbar{display:flex;flex-wrap:wrap;gap:0.6rem;align-items:center}
+.filter-bar{display:flex;flex-wrap:wrap;gap:0.6rem;align-items:center;margin-bottom:1rem}
+.filter-bar input,.filter-bar select{padding:0.45rem 0.7rem;border:1.5px solid var(--border);border-radius:7px;font-size:0.8rem;font-family:var(--font);background:var(--surface)}
+.filter-bar input:focus,.filter-bar select:focus{outline:none;border-color:var(--gold)}
+.quick-actions{display:flex;flex-wrap:wrap;gap:0.75rem;margin-bottom:1.5rem}
+
+/* ── MODALS ── */
+.modal-overlay{display:none;position:fixed;inset:0;background:rgba(13,27,54,0.55);z-index:400;align-items:center;justify-content:center;padding:1rem;backdrop-filter:blur(3px)}
+.modal-overlay.open{display:flex}
+.modal{background:var(--surface);border-radius:14px;width:100%;max-width:520px;max-height:92vh;overflow-y:auto;box-shadow:var(--shadow-lg);animation:modal-in 0.2s ease}
+.modal-lg{max-width:720px}
+@keyframes modal-in{from{transform:translateY(20px) scale(0.97);opacity:0}to{transform:none;opacity:1}}
+.modal-head{padding:1.1rem 1.5rem;border-bottom:1px solid var(--border);display:flex;justify-content:space-between;align-items:center;background:var(--navy)}
+.modal-head h3{font-size:1rem;color:#fff;font-weight:700}
+.modal-close{background:none;border:none;color:rgba(255,255,255,0.5);font-size:1.4rem;cursor:pointer;line-height:1;padding:0 0.25rem}
+.modal-close:hover{color:#fff}
+.modal-body{padding:1.5rem}
+.modal-foot{padding:1rem 1.5rem;border-top:1px solid var(--border);display:flex;justify-content:flex-end;gap:0.5rem;background:var(--surface2)}
+
+/* ── FORMS ── */
+.fg{margin-bottom:1.1rem}
+.fg label{display:block;font-size:0.75rem;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:0.04em;margin-bottom:0.35rem}
+.fg input,.fg select,.fg textarea{width:100%;padding:0.6rem 0.85rem;border:1.5px solid var(--border);border-radius:8px;font-size:0.875rem;font-family:var(--font);background:var(--surface);transition:border-color 0.2s;color:var(--text)}
+.fg input:focus,.fg select:focus,.fg textarea:focus{outline:none;border-color:var(--gold);box-shadow:0 0 0 3px var(--gold-dim)}
+.fg input[readonly]{background:var(--surface2);color:var(--muted)}
+.fg input.invalid,.fg select.invalid{border-color:var(--red)}
+.fe{font-size:0.73rem;color:var(--red);margin-top:0.25rem;display:none}
+.invalid+.fe,.invalid~.fe{display:block}
+.fhint{font-size:0.73rem;color:var(--muted);margin-top:0.25rem}
+.fg.disabled input,.fg.disabled select{opacity:0.7;cursor:not-allowed}
+.frow{display:grid;grid-template-columns:1fr 1fr;gap:1rem}
+.frow3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:1rem}
+.fsep{border:none;border-top:1px solid var(--border);margin:1.25rem 0}
+
+/* ── CHART ── */
+.chart-box{position:relative;height:280px;max-width:100%}
+
+/* ── RECEIPT ── */
+.receipt{border:2px solid var(--navy);border-radius:var(--radius);padding:2rem;max-width:480px;margin:0 auto}
+.receipt-head{text-align:center;margin-bottom:1.5rem;padding-bottom:1rem;border-bottom:2px dashed var(--border)}
+.receipt-head .co{font-size:1.1rem;font-weight:700;color:var(--navy)}
+.receipt-head .branch{font-size:0.8rem;color:var(--muted)}
+.receipt-head .type{display:inline-block;background:var(--navy);color:var(--gold);padding:0.3rem 1rem;border-radius:4px;font-size:0.75rem;font-weight:700;letter-spacing:0.08em;margin-top:0.6rem}
+.receipt-row{display:flex;justify-content:space-between;padding:0.3rem 0;font-size:0.85rem;border-bottom:1px dashed #eee}
+.receipt-row:last-of-type{border:none}
+.receipt-total{display:flex;justify-content:space-between;padding:0.6rem 0;font-size:1rem;font-weight:700;border-top:2px solid var(--navy);margin-top:0.5rem;color:var(--navy)}
+.receipt-stamp{text-align:center;margin-top:1.5rem;font-size:0.7rem;color:var(--muted)}
+.statement-summary{display:grid;grid-template-columns:repeat(3,1fr);gap:0.75rem;margin-bottom:1.25rem}
+.ss-card{background:var(--surface2);border-radius:8px;padding:0.85rem;text-align:center;border-top:3px solid var(--gold)}
+.ss-label{font-size:0.72rem;color:var(--muted);font-weight:600;text-transform:uppercase;letter-spacing:0.03em}
+.ss-val{font-size:1rem;font-weight:700;color:var(--navy);margin-top:0.3rem;font-family:var(--mono)}
+.type-header{background:var(--navy);color:#fff;padding:0.6rem 1rem;font-size:0.78rem;font-weight:700;text-transform:uppercase;letter-spacing:0.06em;margin-top:1rem;border-radius:6px 6px 0 0}
+
+/* ── TOAST ── */
+.toast-stack{position:fixed;bottom:1.25rem;right:1.25rem;z-index:900;display:flex;flex-direction:column;gap:0.4rem;max-width:320px}
+.toast{background:var(--navy);color:#fff;padding:0.7rem 1rem;border-radius:8px;font-size:0.82rem;border-left:4px solid var(--gold);box-shadow:var(--shadow-lg);animation:tin 0.25s ease}
+.toast.ok{border-left-color:var(--green)}
+.toast.err{border-left-color:var(--red)}
+@keyframes tin{from{transform:translateX(110%);opacity:0}to{transform:none;opacity:1}}
+
+/* ── ADMIN TOOLS ── */
+.admin-box{border:2px dashed var(--border);border-radius:var(--radius);padding:1.25rem;margin-top:1rem}
+.admin-box h4{font-size:0.8rem;font-weight:700;text-transform:uppercase;letter-spacing:0.06em;margin-bottom:0.75rem;color:var(--muted)}
+.reports-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:1.25rem;margin-bottom:1.5rem}
+
+/* ── ADVANCE INDICATOR ── */
+.adv-pill{display:inline-flex;align-items:center;gap:0.4rem;background:rgba(26,138,80,0.12);border:1px solid rgba(26,138,80,0.3);border-radius:20px;padding:0.2rem 0.6rem;font-size:0.72rem;color:var(--green);font-weight:600}
+
+/* ── SESSION BOX ── */
+.session-box{background:var(--surface2);border-left:4px solid var(--gold);padding:0.75rem 1rem;border-radius:6px;font-size:0.85rem;margin-bottom:1rem}
+
+/* ── PRINT ── */
+@media print{
+  .sidebar,.topbar,.no-print,.filter-bar,.toolbar,.btn-group,.quick-actions{display:none!important}
+  .main-wrap{margin-left:0}
+  .main{padding:0}
+  .section{display:none!important}
+  .section.active{display:block!important}
+  .modal-overlay.open{position:static;background:none;backdrop-filter:none;display:block!important}
+  .modal{box-shadow:none;max-height:none;max-width:100%}
+  .modal-head,.modal-foot{display:none!important}
+}
+
+/* ── RESPONSIVE ── */
+@media(max-width:900px){
+  .sidebar{transform:translateX(-100%)}
+  .sidebar.open{transform:none}
+  .main-wrap{margin-left:0}
+  .main{padding:1rem;padding-top:4rem}
+  .topbar{padding:0.75rem 1rem;padding-top:3.5rem}
+  .menu-btn{display:block}
+  .frow{grid-template-columns:1fr}
+  .frow3{grid-template-columns:1fr 1fr}
+  .card-row{grid-template-columns:1fr}
+  .statement-summary{grid-template-columns:1fr}
+}
+@media(max-width:480px){
+  .metrics{grid-template-columns:1fr 1fr}
+  .frow3{grid-template-columns:1fr}
+}
+</style>
+</head>
+<body>
+
+<!-- ════════════ LOGIN ════════════ -->
+<div id="loginScreen">
+  <div class="login-wrap">
+    <div class="login-logo">
+      <div class="brand">⛽ STARGAS CORPORATION</div>
+      <div class="subbrand">Mantagbak Branch · Payment System v5</div>
+    </div>
+    <div class="login-card">
+      <div class="login-card-header">
+        <h2>Sign In</h2>
+        <p>Enter your credentials to access the system</p>
+      </div>
+      <div class="login-card-body">
+        <div class="locked-notice" id="lockedNotice"></div>
+        <div class="login-field" id="lfUser">
+          <label>Username *</label>
+          <input type="text" id="lUsername" placeholder="Enter your username" autocomplete="username">
+          <div class="login-error">Username is required</div>
+        </div>
+        <div class="login-field" id="lfPass">
+          <label>Password *</label>
+          <div class="login-pwd-wrap">
+            <input type="password" id="lPassword" placeholder="Enter your password" autocomplete="current-password">
+            <button class="btn-eye" type="button" id="btnEye" title="Show/hide password">👁</button>
+          </div>
+          <div class="login-error" id="passError">Incorrect password</div>
+        </div>
+        <div class="login-field">
+          <label>Role</label>
+          <select id="lRole">
+            <option value="Cashier">Cashier</option>
+            <option value="Admin">Admin</option>
+          </select>
+        </div>
+        <button type="button" class="login-btn" id="btnLogin">Sign In →</button>
+      </div>
+    </div>
+    <div class="login-footer">STARGAS Corporation · Mantagbak Branch · Secured System</div>
+  </div>
+</div>
+
+<!-- ════════════ APP SHELL ════════════ -->
+<div id="appShell" class="hidden">
+  <button class="menu-btn no-print" id="menuBtn">☰</button>
+
+  <aside class="sidebar" id="sidebar">
+    <div class="sb-brand">
+      <div class="name">⛽ STARGAS</div>
+      <div class="branch">Mantagbak Branch</div>
+    </div>
+    <nav class="nav-items">
+      <button class="nav-item active" data-sec="dashboard"><span class="icon">📊</span> Dashboard</button>
+      <button class="nav-item" data-sec="billing"><span class="icon">📄</span> Billing</button>
+      <button class="nav-item" data-sec="collections"><span class="icon">💵</span> Collections</button>
+      <button class="nav-item" data-sec="accounts"><span class="icon">👥</span> Accounts</button>
+      <button class="nav-item" data-sec="advance"><span class="icon">💰</span> Advance Payments</button>
+      <div class="nav-sep"></div>
+      <button class="nav-item" data-sec="reports"><span class="icon">📈</span> Reports</button>
+      <button class="nav-item" data-sec="users" id="navUsers"><span class="icon">🔑</span> User Management</button>
+      <button class="nav-item" data-sec="access"><span class="icon">🔐</span> Access Log</button>
+    </nav>
+    <div class="sb-footer">
+      <div class="sb-user">
+        <div class="sb-avatar" id="sbAvatar">?</div>
+        <div>
+          <div class="sb-uname" id="sbUsername">—</div>
+          <div class="sb-urole" id="sbRole">—</div>
+        </div>
+        <button class="sb-signout" id="btnSignOut" title="Sign Out">→ Out</button>
+      </div>
+    </div>
+  </aside>
+
+  <div class="main-wrap">
+    <header class="topbar no-print">
+      <div class="topbar-left">
+        <span class="tb-title" id="tbTitle">Dashboard</span>
+        <div class="tb-badges" id="tbBadges"></div>
+      </div>
+      <div class="topbar-right">
+        <span class="clock" id="liveClock">—</span>
+      </div>
+    </header>
+
+    <main class="main">
+
+      <!-- ── DASHBOARD ── -->
+      <section id="sec-dashboard" class="section active">
+        <div class="pg-header">
+          <div class="pg-title">Dashboard</div>
+          <div class="toolbar no-print">
+            <label style="font-size:0.8rem;font-weight:600;color:var(--muted)">Year:</label>
+            <select id="dashYear" class="filter-bar" style="margin-bottom:0"></select>
+            <button class="btn btn-ghost btn-sm" id="btnPrintDash">🖨 Print</button>
+          </div>
+        </div>
+        <div class="quick-actions no-print">
+          <button class="btn btn-gold" id="qNewInv">+ New Invoice</button>
+          <button class="btn btn-navy" id="qNewPay">+ Record Payment</button>
+        </div>
+        <div class="metrics" id="dashMetrics"></div>
+        <div id="overdueAlert"></div>
+        <div class="card-row">
+          <div class="card">
+            <h3>Collection Rate (YTD)</h3>
+            <div id="collRateBox"></div>
+          </div>
+          <div class="card">
+            <h3>Advance Credit Summary</h3>
+            <div id="advSummary"></div>
+          </div>
+        </div>
+        <div class="card no-print">
+          <h3>Monthly Billed vs Collected</h3>
+          <div class="chart-box"><canvas id="monthChart"></canvas></div>
+        </div>
+        <div class="card" id="monthBreakCard">
+          <h3>Monthly Breakdown</h3>
+          <div class="table-wrap">
+            <table>
+              <thead><tr>
+                <th>Month</th><th class="text-right">Billed</th><th class="text-right">Collected</th>
+                <th class="text-right">Outstanding</th><th class="text-right">Rate %</th><th>Status</th>
+              </tr></thead>
+              <tbody id="monthTbody"></tbody>
+            </table>
+          </div>
+        </div>
+        <div class="card">
+          <h3>Recent Payments</h3>
+          <div class="table-wrap">
+            <table>
+              <thead><tr><th>OR #</th><th>Date</th><th>Account</th><th>Invoice</th><th class="text-right">Amount</th><th>Method</th></tr></thead>
+              <tbody id="recentPayBody"></tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
+      <!-- ── BILLING ── -->
+      <section id="sec-billing" class="section">
+        <div class="pg-header">
+          <div class="pg-title">Billing — Invoices</div>
+          <div class="toolbar no-print">
+            <button class="btn btn-gold" id="btnAddInv">+ New Invoice</button>
+            <button class="btn btn-ghost btn-sm" id="btnExpInv">Export CSV</button>
+          </div>
+        </div>
+        <div class="filter-bar no-print">
+          <input type="search" id="invSearch" placeholder="Search invoice or account…" style="min-width:200px">
+          <select id="invStFilter">
+            <option value="">All Status</option>
+            <option value="PAID">PAID</option>
+            <option value="PARTIAL">PARTIAL</option>
+            <option value="UNPAID">UNPAID</option>
+          </select>
+          <select id="invYrFilter"></select>
+        </div>
+        <div class="card">
+          <div class="table-wrap">
+            <table>
+              <thead><tr>
+                <th>Invoice #</th><th>Date</th><th>Account</th><th>Period</th>
+                <th class="text-right">Amount</th><th class="text-right">Disc.</th>
+                <th class="text-right">Due</th><th class="text-right">Paid</th>
+                <th class="text-right">Balance</th><th>Due Date</th><th>Status</th>
+                <th class="no-print">Actions</th>
+              </tr></thead>
+              <tbody id="invBody"></tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
+      <!-- ── COLLECTIONS ── -->
+      <section id="sec-collections" class="section">
+        <div class="pg-header">
+          <div class="pg-title">Collections — Payments</div>
+          <div class="toolbar no-print">
+            <button class="btn btn-gold" id="btnAddPay">+ Record Payment</button>
+            <button class="btn btn-ghost btn-sm" id="btnExpPay">Export CSV</button>
+          </div>
+        </div>
+        <div class="filter-bar no-print">
+          <input type="search" id="paySearch" placeholder="Search OR#, account, invoice…" style="min-width:200px">
+          <label style="font-size:0.8rem;color:var(--muted)">From:</label>
+          <input type="date" id="payFrom">
+          <label style="font-size:0.8rem;color:var(--muted)">To:</label>
+          <input type="date" id="payTo">
+          <button class="btn btn-ghost btn-xs" id="btnClearPay">Clear</button>
+        </div>
+        <div class="card">
+          <div class="table-wrap">
+            <table>
+              <thead><tr>
+                <th>Payment #</th><th>Date</th><th>Account</th><th>Invoice</th>
+                <th class="text-right">Cash</th><th class="text-right">Advance</th>
+                <th class="text-right">Total</th><th>Method</th><th>Reference</th>
+                <th class="no-print">Actions</th>
+              </tr></thead>
+              <tbody id="payBody"></tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
+      <!-- ── ACCOUNTS ── -->
+      <section id="sec-accounts" class="section">
+        <div class="pg-header">
+          <div class="pg-title">Account Receivables</div>
+          <button class="btn btn-gold no-print" id="btnAddAcc">+ Add Account</button>
+        </div>
+        <div class="filter-bar no-print">
+          <input type="search" id="accSearch" placeholder="Search account…">
+          <select id="accTypeFilter">
+            <option value="">All Types</option>
+            <option value="Private PO">Private PO</option>
+            <option value="LGU PO">LGU PO</option>
+          </select>
+          <select id="accYrFilter"></select>
+        </div>
+        <div class="card"><div id="accTables"></div></div>
+      </section>
+
+      <!-- ── ADVANCE ── -->
+      <section id="sec-advance" class="section">
+        <div class="pg-header">
+          <div class="pg-title">Advance Payments</div>
+          <button class="btn btn-gold no-print" id="btnAddAdv">+ Add Advance</button>
+        </div>
+        <div class="card">
+          <div class="table-wrap">
+            <table>
+              <thead><tr>
+                <th>Account</th><th>Year</th>
+                <th class="text-right">Advance Amount</th>
+                <th class="text-right">Applied</th>
+                <th class="text-right">Remaining Credit</th>
+                <th class="no-print">Actions</th>
+              </tr></thead>
+              <tbody id="advBody"></tbody>
+              <tfoot id="advFoot"></tfoot>
+            </table>
+          </div>
+        </div>
+      </section>
+
+      <!-- ── REPORTS ── -->
+      <section id="sec-reports" class="section">
+        <div class="pg-header"><div class="pg-title">Reports &amp; Tools</div></div>
+        <div class="reports-grid">
+          <div class="card">
+            <h3>Aging Report (Open Invoices)</h3>
+            <div class="table-wrap">
+              <table>
+                <thead><tr><th>Bucket</th><th class="text-right">Count</th><th class="text-right">Amount</th></tr></thead>
+                <tbody id="agingBody"></tbody>
+              </table>
+            </div>
+          </div>
+          <div class="card">
+            <h3>Top Outstanding Accounts</h3>
+            <div class="table-wrap">
+              <table>
+                <thead><tr><th>Account</th><th class="text-right">Balance</th></tr></thead>
+                <tbody id="topDebtBody"></tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+        <div class="card">
+          <h3>Activity Log</h3>
+          <div class="table-wrap">
+            <table>
+              <thead><tr><th>Time</th><th>User</th><th>Action</th><th>Details</th></tr></thead>
+              <tbody id="actLogBody"></tbody>
+            </table>
+          </div>
+        </div>
+        <div class="admin-box no-print" id="adminBox">
+          <h4>Administrator Tools</h4>
+          <div class="toolbar">
+            <button class="btn btn-navy btn-sm" id="btnBackup">⬇ Download Backup</button>
+            <label class="btn btn-ghost btn-sm" style="cursor:pointer">
+              ⬆ Restore Backup
+              <input type="file" id="restoreInput" accept=".json" style="display:none">
+            </label>
+            <button class="btn btn-red btn-sm" id="btnReset">Reset All Data</button>
+          </div>
+          <p class="fhint" style="margin-top:0.5rem">Backup/restore replaces all data. Admin only.</p>
+        </div>
+      </section>
+
+      <!-- ── USER MANAGEMENT ── -->
+      <section id="sec-users" class="section">
+        <div class="pg-header">
+          <div class="pg-title">User Management</div>
+          <button class="btn btn-gold no-print" id="btnAddUser">+ Add User</button>
+        </div>
+        <div class="card">
+          <div class="table-wrap">
+            <table>
+              <thead><tr>
+                <th>Username</th><th>Full Name</th><th>Role</th><th>Status</th>
+                <th>Last Login</th><th>Failed Attempts</th><th class="no-print">Actions</th>
+              </tr></thead>
+              <tbody id="userBody"></tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
+      <!-- ── ACCESS LOG ── -->
+      <section id="sec-access" class="section">
+        <div class="pg-header"><div class="pg-title">Access Log</div></div>
+        <div class="session-box" id="sessBox"></div>
+        <div class="filter-bar no-print">
+          <select id="accessUserFilter"><option value="">All Users</option></select>
+        </div>
+        <div class="card">
+          <div class="table-wrap">
+            <table>
+              <thead><tr><th>Timestamp</th><th>Username</th><th>Role</th><th>Action</th><th>IP / Agent</th></tr></thead>
+              <tbody id="accessBody"></tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
+    </main>
+  </div>
+</div>
+
+<!-- ════════ MODALS ════════ -->
+
+<!-- Invoice Modal -->
+<div class="modal-overlay" id="mInvoice">
+  <div class="modal modal-lg">
+    <div class="modal-head">
+      <h3 id="mInvTitle">New Invoice</h3>
+      <button class="modal-close" data-close="mInvoice">&times;</button>
+    </div>
+    <div class="modal-body">
+      <input type="hidden" id="invEditId">
+      <div class="frow">
+        <div class="fg"><label>Invoice #</label><input type="text" id="invNo" readonly><p class="fhint">Auto-generated</p></div>
+        <div class="fg" id="fgInvDate"><label>Invoice Date *</label><input type="date" id="invDate" required><span class="fe">Required</span></div>
+      </div>
+      <div class="fg" id="fgInvAcc"><label>Account *</label><select id="invAcc" required></select><span class="fe">Required</span></div>
+      <div class="frow">
+        <div class="fg"><label>Billing Month</label><select id="invMonth"></select></div>
+        <div class="fg"><label>Billing Year</label><select id="invYear"></select></div>
+      </div>
+      <div class="frow">
+        <div class="fg" id="fgInvAmt"><label>Amount (₱) *</label><input type="number" id="invAmt" step="0.01" min="0" required><span class="fe">Required</span></div>
+        <div class="fg"><label>Discount (₱)</label><input type="number" id="invDisc" step="0.01" min="0" value="0"></div>
+      </div>
+      <div class="fg"><label>Due Date</label><input type="date" id="invDue"></div>
+      <div class="fg"><label>Remarks</label><textarea id="invRemarks" rows="2"></textarea></div>
+      <div id="invViewInfo" style="display:none">
+        <hr class="fsep">
+        <div class="frow">
+          <div><span style="font-size:0.78rem;color:var(--muted);text-transform:uppercase;font-weight:700">Amount Due</span><br><strong id="vi-due">—</strong></div>
+          <div><span style="font-size:0.78rem;color:var(--muted);text-transform:uppercase;font-weight:700">Paid</span><br><strong id="vi-paid">—</strong></div>
+          <div><span style="font-size:0.78rem;color:var(--muted);text-transform:uppercase;font-weight:700">Balance</span><br><strong id="vi-bal">—</strong></div>
+          <div><span style="font-size:0.78rem;color:var(--muted);text-transform:uppercase;font-weight:700">Status</span><br><span id="vi-status">—</span></div>
+        </div>
+      </div>
+    </div>
+    <div class="modal-foot">
+      <button class="btn btn-ghost" data-close="mInvoice">Cancel</button>
+      <button class="btn btn-gold" id="btnSaveInv">Save Invoice</button>
+    </div>
+  </div>
+</div>
+
+<!-- Payment Modal -->
+<div class="modal-overlay" id="mPayment">
+  <div class="modal modal-lg">
+    <div class="modal-head">
+      <h3 id="mPayTitle">Record Payment</h3>
+      <button class="modal-close" data-close="mPayment">&times;</button>
+    </div>
+    <div class="modal-body">
+      <input type="hidden" id="payEditId">
+      <div class="frow">
+        <div class="fg"><label>OR #</label><input type="text" id="payNo" readonly></div>
+        <div class="fg" id="fgPayDate"><label>Payment Date *</label><input type="date" id="payDate" required><span class="fe">Required</span></div>
+      </div>
+      <div class="fg" id="fgPayInv">
+        <label>Invoice *</label>
+        <select id="payInv" required></select>
+        <span class="fe">Required</span>
+        <p class="fhint" id="payInvHint"></p>
+      </div>
+      <!-- ADVANCE NOTIFICATION -->
+      <div id="advCreditNotice" style="display:none;background:rgba(26,138,80,0.08);border:1px solid rgba(26,138,80,0.3);border-radius:8px;padding:0.75rem 1rem;margin-bottom:1rem;font-size:0.82rem;color:var(--green)">
+        <strong>💰 Advance Credit Available!</strong><br>
+        <span id="advCreditMsg"></span>
+        <button type="button" class="btn btn-green btn-xs" id="btnApplyAdv" style="margin-top:0.4rem">Apply to This Payment</button>
+      </div>
+      <div class="frow3">
+        <div class="fg" id="fgPayAmt">
+          <label>Cash / Bank (₱) *</label>
+          <input type="number" id="payAmt" step="0.01" min="0" required>
+          <span class="fe">Enter amount</span>
+          <button type="button" class="btn btn-green btn-xs" id="btnPayFull" style="margin-top:0.4rem">Pay Full Balance</button>
+        </div>
+        <div class="fg">
+          <label>Advance Applied (₱)</label>
+          <input type="number" id="payAdvAmt" step="0.01" min="0" value="0">
+          <p class="fhint" id="payAdvHint">Available: —</p>
+        </div>
+        <div class="fg" id="fgPayMethod">
+          <label>Method *</label>
+          <select id="payMethod" required>
+            <option>Cash</option>
+            <option>Check</option>
+            <option>Bank Transfer</option>
+            <option>GCash</option>
+            <option>Other</option>
+          </select>
+        </div>
+      </div>
+      <div class="fg"><label>Reference / Check No.</label><input type="text" id="payRef" placeholder="Optional"></div>
+      <div class="fg"><label>Remarks</label><textarea id="payRem" rows="2"></textarea></div>
+    </div>
+    <div class="modal-foot">
+      <button class="btn btn-ghost" data-close="mPayment">Cancel</button>
+      <button class="btn btn-gold" id="btnSavePay">Save Payment</button>
+    </div>
+  </div>
+</div>
+
+<!-- Invoice Print Modal -->
+<div class="modal-overlay" id="mInvPrint">
+  <div class="modal modal-lg">
+    <div class="modal-head">
+      <h3>Billing Invoice</h3>
+      <button class="modal-close" data-close="mInvPrint">&times;</button>
+    </div>
+    <div class="modal-body"><div id="invPrintArea"></div></div>
+    <div class="modal-foot no-print">
+      <button class="btn btn-ghost" data-close="mInvPrint">Close</button>
+      <button class="btn btn-gold" onclick="window.print()">🖨 Print</button>
+    </div>
+  </div>
+</div>
+
+<!-- Receipt Modal -->
+<div class="modal-overlay" id="mReceipt">
+  <div class="modal modal-lg">
+    <div class="modal-head">
+      <h3>Official Receipt</h3>
+      <button class="modal-close" data-close="mReceipt">&times;</button>
+    </div>
+    <div class="modal-body"><div id="receiptArea"></div></div>
+    <div class="modal-foot no-print">
+      <button class="btn btn-ghost" data-close="mReceipt">Close</button>
+      <button class="btn btn-gold" onclick="window.print()">🖨 Print</button>
+    </div>
+  </div>
+</div>
+
+<!-- Statement Modal -->
+<div class="modal-overlay" id="mStatement">
+  <div class="modal modal-lg">
+    <div class="modal-head">
+      <h3 id="mStatTitle">Account Statement</h3>
+      <button class="modal-close" data-close="mStatement">&times;</button>
+    </div>
+    <div class="modal-body">
+      <div class="statement-summary" id="statSummary"></div>
+      <div class="table-wrap">
+        <table>
+          <thead><tr>
+            <th>Date</th><th>Type</th><th>Reference</th><th>Description</th>
+            <th class="text-right">Debit</th><th class="text-right">Credit</th><th class="text-right">Balance</th>
+          </tr></thead>
+          <tbody id="statBody"></tbody>
+        </table>
+      </div>
+    </div>
+    <div class="modal-foot">
+      <button class="btn btn-ghost" data-close="mStatement">Close</button>
+      <button class="btn btn-gold" onclick="window.print()">🖨 Print</button>
+    </div>
+  </div>
+</div>
+
+<!-- Account Modal -->
+<div class="modal-overlay" id="mAccount">
+  <div class="modal">
+    <div class="modal-head">
+      <h3 id="mAccTitle">Add Account</h3>
+      <button class="modal-close" data-close="mAccount">&times;</button>
+    </div>
+    <div class="modal-body">
+      <input type="hidden" id="accEditId">
+      <div class="fg" id="fgAccName"><label>Account Name *</label><input type="text" id="accName" required><span class="fe">Required</span></div>
+      <div class="fg"><label>Account Type *</label><select id="accType"><option value="Private PO">Private PO</option><option value="LGU PO">LGU PO</option></select></div>
+      <div class="fg"><label>Account Code</label><input type="text" id="accCode" placeholder="e.g. PO-001"></div>
+      <div class="fg"><label>Contact / Notes</label><input type="text" id="accContact" placeholder="Optional"></div>
+    </div>
+    <div class="modal-foot">
+      <button class="btn btn-ghost" data-close="mAccount">Cancel</button>
+      <button class="btn btn-gold" id="btnSaveAcc">Save</button>
+    </div>
+  </div>
+</div>
+
+<!-- Advance Modal -->
+<div class="modal-overlay" id="mAdvance">
+  <div class="modal">
+    <div class="modal-head">
+      <h3 id="mAdvTitle">Add Advance Payment</h3>
+      <button class="modal-close" data-close="mAdvance">&times;</button>
+    </div>
+    <div class="modal-body">
+      <input type="hidden" id="advEditId">
+      <div class="fg"><label>Account *</label><select id="advAcc"></select></div>
+      <div class="fg"><label>Year *</label><select id="advYear"></select></div>
+      <div class="fg"><label>Advance Amount (₱) *</label><input type="number" id="advAmt" step="0.01" min="0"></div>
+      <div class="fg"><label>Applied Amount (₱)</label><input type="number" id="advApplied" step="0.01" min="0" value="0"></div>
+      <p class="fhint">Advance credit automatically deducts from future invoices when a payment is recorded.</p>
+    </div>
+    <div class="modal-foot">
+      <button class="btn btn-ghost" data-close="mAdvance">Cancel</button>
+      <button class="btn btn-gold" id="btnSaveAdv">Save</button>
+    </div>
+  </div>
+</div>
+
+<!-- User Modal -->
+<div class="modal-overlay" id="mUser">
+  <div class="modal">
+    <div class="modal-head">
+      <h3 id="mUserTitle">Add User</h3>
+      <button class="modal-close" data-close="mUser">&times;</button>
+    </div>
+    <div class="modal-body">
+      <input type="hidden" id="userEditId">
+      <div class="fg" id="fgUname"><label>Username *</label><input type="text" id="uUsername" placeholder="e.g. cashier01"><span class="fe">Required</span></div>
+      <div class="fg"><label>Full Name *</label><input type="text" id="uFullName" placeholder="e.g. Juan dela Cruz"></div>
+      <div class="fg"><label>Role *</label><select id="uRole"><option value="Cashier">Cashier</option><option value="Admin">Admin</option></select></div>
+      <div class="fg" id="fgUpass">
+        <label id="uPassLabel">Password *</label>
+        <div class="login-pwd-wrap">
+          <input type="password" id="uPassword" placeholder="Minimum 6 characters">
+          <button class="btn-eye" type="button" id="btnUEye">👁</button>
+        </div>
+        <span class="fe" id="uPassError">Minimum 6 characters required</span>
+        <p class="fhint" id="uPassHint"></p>
+      </div>
+      <div class="fg"><label>Status</label><select id="uStatus"><option value="active">Active</option><option value="inactive">Inactive</option></select></div>
+    </div>
+    <div class="modal-foot">
+      <button class="btn btn-ghost" data-close="mUser">Cancel</button>
+      <button class="btn btn-gold" id="btnSaveUser">Save User</button>
+    </div>
+  </div>
+</div>
+
+<!-- Confirm Modal -->
+<div class="modal-overlay" id="mConfirm">
+  <div class="modal" style="max-width:360px">
+    <div class="modal-head"><h3>Confirm Action</h3></div>
+    <div class="modal-body"><p id="confirmMsg" style="font-size:0.9rem;line-height:1.6">Are you sure?</p></div>
+    <div class="modal-foot">
+      <button class="btn btn-ghost" data-close="mConfirm">Cancel</button>
+      <button class="btn btn-red" id="btnConfirm">Confirm</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast-stack no-print" id="toastStack"></div>
+
+<script>
+/* =============================================================
+ * STARGAS Payment System v5
+ * Strong auth · Advance auto-deduct · Full POS experience
+ * ============================================================= */
+
+const SK = 'stargas_v5';
+const YEARS = [2022,2023,2024,2025,2026];
+const MONTHS = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+const FULL_MONTHS = ['January','February','March','April','May','June','July','August','September','October','November','December'];
+const BRANCH = 'STARGAS — Mantagbak Branch';
+const MAX_ATTEMPTS = 5;
+const LOCKOUT_MINS = 15;
+
+let D = null; // app data
+let mChart = null;
+let pendingDel = null;
+
+// ── Utils ──
+function uid(){ return Date.now().toString(36)+Math.random().toString(36).slice(2,8); }
+function esc(s){ const d=document.createElement('div');d.textContent=(s==null?'':String(s));return d.innerHTML; }
+function fmt(n){ return '₱'+(Number(n)||0).toLocaleString('en-PH',{minimumFractionDigits:2,maximumFractionDigits:2}); }
+function today(){ return new Date().toISOString().slice(0,10); }
+function initials(n){ return (n||'?').split(' ').map(x=>x[0]).join('').slice(0,2).toUpperCase(); }
+function isoNow(){ return new Date().toISOString(); }
+function billingLabel(inv){ return MONTHS[inv.billingMonth]+' '+inv.billingYear; }
+function defaultDue(y,m){ const d=new Date(y,m+1,0); d.setDate(d.getDate()+15); return d.toISOString().slice(0,10); }
+function daysPast(inv){
+  if(!isOverdue(inv)) return 0;
+  return Math.floor((new Date()-new Date(inv.dueDate+'T12:00:00'))/(86400000));
+}
+function statusBadge(s){
+  if(s==='PAID') return '<span class="badge b-paid">PAID</span>';
+  if(s==='PARTIAL') return '<span class="badge b-partial">PARTIAL</span>';
+  return '<span class="badge b-unpaid">UNPAID</span>';
+}
+function progClass(r){ return r<30?'low':r<=70?'mid':'high'; }
+
+// ── Invoice logic ──
+function invDue(inv){ return Math.max(0,(Number(inv.amount)||0)-(Number(inv.discount)||0)); }
+function invPaid(invId){ return D.payments.filter(p=>p.invoiceId===invId).reduce((s,p)=>s+(Number(p.cash)||0)+(Number(p.advance)||0),0); }
+function invStatus(inv){ const d=invDue(inv),p=invPaid(inv.id); if(p>=d&&d>0)return'PAID'; if(p>0)return'PARTIAL'; return'UNPAID'; }
+function invBalance(inv){ return invStatus(inv)==='PAID'?0:Math.max(0,invDue(inv)-invPaid(inv.id)); }
+function isOverdue(inv){ return invStatus(inv)!=='PAID'&&inv.dueDate&&inv.dueDate<today(); }
+function getInv(id){ return D.invoices.find(i=>i.id===id); }
+function accName(id){ const a=D.accounts.find(a=>a.id===id); return a?a.name:'Unknown'; }
+function countOpen(){ return D.invoices.filter(i=>invStatus(i)!=='PAID').length; }
+function overdueList(){ return D.invoices.filter(i=>isOverdue(i)); }
+
+// ── Advance ──
+function advRemaining(accountId, year){
+  const a=D.advancePayments.find(x=>x.accountId===accountId&&x.year===year);
+  return a?Math.max(0,(Number(a.advanceAmount)||0)-(Number(a.appliedAmount)||0)):0;
+}
+function adjAdvance(accountId, year, delta){
+  if(!delta) return;
+  let a=D.advancePayments.find(x=>x.accountId===accountId&&x.year===year);
+  if(!a){ if(delta>0){ a={id:uid(),accountId,year,advanceAmount:delta,appliedAmount:delta}; D.advancePayments.push(a); return; } return; }
+  a.appliedAmount=Math.max(0,(Number(a.appliedAmount)||0)+delta);
+}
+
+// ── Sequences ──
+function nextInvNo(y){ const s=D.settings.iSeq||1; D.settings.iSeq=(D.settings.iSeq||1)+1; return 'INV-'+y+'-'+String(s).padStart(5,'0'); }
+function previewInvNo(y){ return 'INV-'+y+'-'+String(D.settings.iSeq||1).padStart(5,'0'); }
+function nextPayNo(y){ const s=D.settings.pSeq||1; D.settings.pSeq=(D.settings.pSeq||1)+1; return 'OR-'+y+'-'+String(s).padStart(5,'0'); }
+function previewPayNo(y){ return 'OR-'+y+'-'+String(D.settings.pSeq||1).padStart(5,'0'); }
+
+// ── Activity Log ──
+function logAct(action, details){
+  if(!D.actLog) D.actLog=[];
+  D.actLog.push({id:uid(),ts:isoNow(),user:D.session?.user||'System',action,details:details||''});
+  if(D.actLog.length>500) D.actLog=D.actLog.slice(-500);
+}
+
+// ── Stats ──
+function monthlyStats(year){
+  const s=MONTHS.map((m,i)=>({month:m,i,billed:0,collected:0,outstanding:0,rate:0,status:'—'}));
+  D.invoices.forEach(inv=>{ if(inv.billingYear!==year) return; const m=inv.billingMonth; s[m].billed+=invDue(inv); s[m].outstanding+=invBalance(inv); });
+  D.payments.forEach(p=>{ const inv=getInv(p.invoiceId); if(!inv||inv.billingYear!==year) return; s[inv.billingMonth].collected+=(Number(p.cash)||0)+(Number(p.advance)||0); });
+  s.forEach(x=>{ x.rate=x.billed>0?(x.collected/x.billed)*100:0; if(!x.billed)x.status='—'; else if(x.collected>=x.billed)x.status='PAID'; else if(x.collected>0)x.status='PARTIAL'; else x.status='UNPAID'; });
+  return s;
+}
+function ytdTotals(year){ return monthlyStats(year).reduce((a,m)=>({billed:a.billed+m.billed,collected:a.collected+m.collected,outstanding:a.outstanding+m.outstanding}),{billed:0,collected:0,outstanding:0}); }
+function todayCollect(){ const t=today(); return D.payments.filter(p=>p.date===t).reduce((s,p)=>s+(Number(p.cash)||0)+(Number(p.advance)||0),0); }
+function todayCount(){ return D.payments.filter(p=>p.date===today()).length; }
+
+// ── Password hashing (simple but better than plaintext) ──
+function hashPw(pw){ let h=5381; for(let i=0;i<pw.length;i++) h=((h<<5)+h)+pw.charCodeAt(i); return 'H'+h.toString(36); }
+
+// ── Data load/save ──
+function loadData(){
+  const raw=localStorage.getItem(SK)||localStorage.getItem('stargas_payment_tracker_v4')||localStorage.getItem('stargas_payment_tracker_v3');
+  if(raw){ try{ D=migrateData(JSON.parse(raw)); saveData(false); return; }catch(e){ console.warn(e); } }
+  D=seedData();
+  saveData(false);
+}
+function saveData(refresh=true){ localStorage.setItem(SK,JSON.stringify(D)); if(refresh) refreshAll(); }
+
+function migrateData(data){
+  if(!data.accounts) data.accounts=[];
+  if(!data.invoices) data.invoices=[];
+  if(!data.payments) data.payments=[];
+  // Normalize payments: old format used 'amount' → split to cash/advance
+  data.payments.forEach(p=>{
+    if(p.cash==null&&p.amount!=null){ p.cash=Number(p.amount)||0; p.advance=Number(p.advanceApplied)||0; delete p.amount; delete p.advanceApplied; }
+    if(p.cash==null) p.cash=0;
+    if(p.advance==null) p.advance=0;
+  });
+  if(!data.advancePayments) data.advancePayments=[];
+  if(!data.accessLog) data.accessLog=[];
+  if(!data.actLog) data.actLog=[];
+  if(!data.settings) data.settings={};
+  if(!data.settings.dashYear) data.settings.dashYear=2026;
+  if(!data.settings.iSeq) data.settings.iSeq=(data.invoices.length||0)+1;
+  if(!data.settings.pSeq) data.settings.pSeq=(data.payments.length||0)+1;
+  if(!data.session) data.session={user:'',role:'Cashier',signedInAt:null,auth:false};
+  if(!data.users) data.users=defaultUsers();
+  data.users.forEach(u=>{ if(!u.failedAttempts) u.failedAttempts=0; if(!u.lockedUntil) u.lockedUntil=null; if(!u.status) u.status='active'; });
+  if(data.transactions) { migrateTxns(data); delete data.transactions; }
+  // Migrate old invoice.discount names
+  data.invoices.forEach(inv=>{ if(inv.discount==null) inv.discount=0; });
+  return data;
+}
+
+function defaultUsers(){
+  return [
+    {id:uid(),username:'admin',fullName:'Branch Administrator',role:'Admin',pwHash:hashPw('admin123'),status:'active',failedAttempts:0,lockedUntil:null,lastLogin:null},
+    {id:uid(),username:'cashier',fullName:'Cashier User',role:'Cashier',pwHash:hashPw('cashier123'),status:'active',failedAttempts:0,lockedUntil:null,lastLogin:null}
+  ];
+}
+
+function migrateTxns(data){
+  (data.transactions||[]).forEach(txn=>{
+    const d=new Date((txn.date||'2026-01-01')+'T12:00:00'),bm=d.getMonth(),by=d.getFullYear();
+    const id=uid();
+    const inv={id,invoiceNo:nextInvNo(by),accountId:txn.accountId,date:txn.date,billingMonth:bm,billingYear:by,amount:Number(txn.amount)||0,discount:Number(txn.discount)||0,dueDate:defaultDue(by,bm),remarks:txn.remarks||''};
+    data.invoices.push(inv);
+    const due=invDue(inv);
+    const ca=txn.status==='PAID'?due:(txn.status==='PARTIAL'?Number(txn.collected)||0:0);
+    if(ca>0) data.payments.push({id:uid(),paymentNo:nextPayNo(by),invoiceId:id,accountId:txn.accountId,date:txn.date,cash:ca,advance:0,method:'Cash',reference:'',remarks:'Migrated',recordedBy:'System'});
+  });
+}
+
+function seedData(){
+  const priv=['CN 1ST PMFC','CN 2ND PMFC','PHILIPPINE RED CROSS','CANORECO','BREWSTAR CAFE','DA OPERATION','DA RESEARCH','SLK','SVM','UNIPHIL'];
+  const lgu=['MDRRMMO DAET','LGU MERCEDES','DIOCESE OF DAET','DILG','MAYOR ALEX PAJARILLO'];
+  while(priv.length<35) priv.push('PRIVATE PO ACCOUNT '+String(priv.length+1).padStart(2,'0'));
+  const accounts=[];
+  priv.forEach(n=>accounts.push({id:uid(),name:n,type:'Private PO',code:'',contact:''}));
+  lgu.forEach(n=>accounts.push({id:uid(),name:n,type:'LGU PO',code:'',contact:''}));
+  const find=n=>accounts.find(a=>a.name.toUpperCase().includes(n.toUpperCase()));
+  const settings={dashYear:2026,iSeq:1,pSeq:1};
+  const invoices=[],payments=[];
+  function addIP(spec){
+    const id=uid(),y=spec.billingYear;
+    const inv={id,invoiceNo:'INV-'+y+'-'+String(settings.iSeq++).padStart(5,'0'),accountId:spec.accountId,date:spec.date,billingMonth:spec.billingMonth,billingYear:y,amount:spec.amount,discount:spec.discount||0,dueDate:spec.dueDate||defaultDue(y,spec.billingMonth),remarks:spec.remarks||''};
+    invoices.push(inv);
+    if(spec.cash>0) payments.push({id:uid(),paymentNo:'OR-'+y+'-'+String(settings.pSeq++).padStart(5,'0'),invoiceId:id,accountId:spec.accountId,date:spec.payDate||spec.date,cash:spec.cash,advance:spec.advance||0,method:spec.method||'Cash',reference:'',remarks:'',recordedBy:'Seed'});
+    return inv;
+  }
+  addIP({accountId:find('LGU MERCEDES').id,date:'2026-01-15',billingMonth:0,billingYear:2026,amount:110070.09,cash:75000,remarks:'January billing — partial'});
+  addIP({accountId:find('UNIPHIL').id,date:'2026-01-20',billingMonth:0,billingYear:2026,amount:34302.97,discount:306.28,cash:33996.69});
+  addIP({accountId:find('CN 2ND PMFC').id,date:'2026-02-10',billingMonth:1,billingYear:2026,amount:34745.88,cash:34745.88});
+  addIP({accountId:find('PHILIPPINE RED CROSS').id,date:'2026-02-12',billingMonth:1,billingYear:2026,amount:3835.40,cash:3835.40});
+  addIP({accountId:find('DA OPERATION').id,date:'2026-02-18',billingMonth:1,billingYear:2026,amount:7908.00,cash:5408.00,advance:2500,remarks:'Advance credit applied'});
+  addIP({accountId:find('CANORECO').id,date:'2026-03-05',billingMonth:2,billingYear:2026,amount:4118.99,discount:56.83,cash:4062.16});
+  return {
+    accounts,invoices,payments,
+    advancePayments:[{id:uid(),accountId:find('DA OPERATION').id,year:2026,advanceAmount:2500,appliedAmount:2500}],
+    accessLog:[],actLog:[],
+    session:{user:'',role:'Cashier',signedInAt:null,auth:false},
+    users:defaultUsers(),
+    settings
+  };
+}
+
+// ── Auth ──
+function findUser(username){ return (D.users||[]).find(u=>u.username.toLowerCase()===username.toLowerCase()); }
+
+function tryLogin(){
+  const username=document.getElementById('lUsername').value.trim();
+  const password=document.getElementById('lPassword').value;
+  const role=document.getElementById('lRole').value;
+  let valid=true;
+  document.getElementById('lfUser').classList.remove('invalid');
+  document.getElementById('lfPass').classList.remove('invalid');
+  document.getElementById('lockedNotice').classList.remove('show');
+
+  if(!username){ document.getElementById('lfUser').classList.add('invalid'); valid=false; }
+  if(!password){ document.getElementById('lfPass').classList.add('invalid'); document.getElementById('passError').textContent='Password is required'; valid=false; }
+  if(!valid) return;
+
+  const u=findUser(username);
+  if(!u||u.status==='inactive'){
+    document.getElementById('lfUser').classList.add('invalid');
+    document.getElementById('lockedNotice').textContent='Account not found or inactive.';
+    document.getElementById('lockedNotice').classList.add('show');
+    logAct('LOGIN_FAIL','Unknown user: '+username);
+    return;
+  }
+
+  // Check lockout
+  if(u.lockedUntil&&new Date(u.lockedUntil)>new Date()){
+    const mins=Math.ceil((new Date(u.lockedUntil)-new Date())/60000);
+    document.getElementById('lockedNotice').textContent=`Account locked. Try again in ${mins} minute(s).`;
+    document.getElementById('lockedNotice').classList.add('show');
+    return;
+  }
+
+  // Check role matches
+  if(u.role!==role){
+    document.getElementById('lockedNotice').textContent=`This account has role "${u.role}", not "${role}".`;
+    document.getElementById('lockedNotice').classList.add('show');
+    return;
+  }
+
+  // Check password
+  if(hashPw(password)!==u.pwHash){
+    u.failedAttempts=(u.failedAttempts||0)+1;
+    if(u.failedAttempts>=MAX_ATTEMPTS){
+      u.lockedUntil=new Date(Date.now()+LOCKOUT_MINS*60000).toISOString();
+      u.failedAttempts=0;
+      document.getElementById('lockedNotice').textContent=`Too many failed attempts. Account locked for ${LOCKOUT_MINS} minutes.`;
+      document.getElementById('lockedNotice').classList.add('show');
+      logAct('ACCOUNT_LOCKED',username+' locked after '+MAX_ATTEMPTS+' failed attempts');
+    } else {
+      const rem=MAX_ATTEMPTS-u.failedAttempts;
+      document.getElementById('lfPass').classList.add('invalid');
+      document.getElementById('passError').textContent=`Incorrect password. ${rem} attempt(s) remaining.`;
+      logAct('LOGIN_FAIL',username+' — wrong password ('+u.failedAttempts+'/'+MAX_ATTEMPTS+')');
+    }
+    saveData(false);
+    return;
+  }
+
+  // Success
+  u.failedAttempts=0;
+  u.lockedUntil=null;
+  u.lastLogin=isoNow();
+  D.session={user:username,fullName:u.fullName,role:u.role,signedInAt:isoNow(),auth:true};
+  D.accessLog.push({id:uid(),ts:isoNow(),user:username,role:u.role,action:'SIGN_IN'});
+  logAct('SIGN_IN',username+' ('+u.role+')');
+  saveData(false);
+  showApp();
+  showToast('Welcome back, '+u.fullName+'!','ok');
+}
+
+function doSignOut(){
+  const {user,role}=D.session;
+  D.accessLog.push({id:uid(),ts:isoNow(),user,role,action:'SIGN_OUT'});
+  logAct('SIGN_OUT',user);
+  D.session.auth=false;
+  saveData(false);
+  showLogin();
+}
+
+function showLogin(){
+  document.getElementById('loginScreen').classList.remove('hidden');
+  document.getElementById('appShell').classList.add('hidden');
+  document.getElementById('lUsername').value='';
+  document.getElementById('lPassword').value='';
+  document.getElementById('lockedNotice').classList.remove('show');
+}
+
+function showApp(){
+  document.getElementById('loginScreen').classList.add('hidden');
+  document.getElementById('appShell').classList.remove('hidden');
+  // Show/hide admin-only items
+  const isAdmin=D.session.role==='Admin';
+  document.getElementById('navUsers').style.display=isAdmin?'':'none';
+  document.getElementById('adminBox').style.display=isAdmin?'':'none';
+  updateSidebar();
+  updateTopbar();
+  refreshAll();
+}
+
+function updateSidebar(){
+  const s=D.session;
+  document.getElementById('sbAvatar').textContent=initials(s.fullName||s.user);
+  document.getElementById('sbUsername').textContent=s.fullName||s.user;
+  document.getElementById('sbRole').textContent=s.role;
+}
+
+function updateTopbar(){
+  const open=countOpen(), over=overdueList().length;
+  let html='';
+  if(over) html+=`<span class="tb-badge">${over} overdue</span>`;
+  if(open) html+=`<span class="tb-badge ${over?'':'ok'}">${open} open invoices</span>`;
+  document.getElementById('tbBadges').innerHTML=html;
+}
+
+function startClock(){
+  function tick(){ document.getElementById('liveClock').textContent=new Date().toLocaleString('en-PH',{weekday:'short',year:'numeric',month:'short',day:'numeric',hour:'2-digit',minute:'2-digit',second:'2-digit'}); }
+  tick(); setInterval(tick,1000);
+}
+
+// ── Modals ──
+function openM(id){ document.getElementById(id).classList.add('open'); }
+function closeM(id){ document.getElementById(id).classList.remove('open'); }
+
+// ── Toast ──
+function showToast(msg,type){
+  const el=document.createElement('div');
+  el.className='toast'+(type?' '+type:'');
+  el.textContent=msg;
+  document.getElementById('toastStack').appendChild(el);
+  setTimeout(()=>el.remove(),3500);
+}
+
+// ── Year/Month selects ──
+function populateYears(){
+  ['dashYear','accYrFilter','invYrFilter','advYear','invYear'].forEach(id=>{
+    const el=document.getElementById(id); if(!el) return;
+    el.innerHTML=YEARS.map(y=>`<option value="${y}">${y}</option>`).join('');
+  });
+  document.getElementById('dashYear').value=D.settings.dashYear;
+  document.getElementById('accYrFilter').value=D.settings.dashYear;
+  document.getElementById('invYrFilter').value=D.settings.dashYear;
+  document.getElementById('invYear').value=new Date().getFullYear();
+  document.getElementById('advYear').value=new Date().getFullYear();
+}
+function populateMonths(){
+  const el=document.getElementById('invMonth');
+  el.innerHTML=MONTHS.map((m,i)=>`<option value="${i}">${m}</option>`).join('');
+}
+function populateAccDrops(){
+  const opts=D.accounts.slice().sort((a,b)=>a.name.localeCompare(b.name)).map(a=>`<option value="${a.id}">${esc(a.name)}</option>`).join('');
+  ['invAcc','advAcc'].forEach(id=>{ const el=document.getElementById(id); if(el) el.innerHTML='<option value="">— Select —</option>'+opts; });
+}
+function populateOpenInvoices(sel){
+  const open=D.invoices.filter(i=>invStatus(i)!=='PAID').sort((a,b)=>a.invoiceNo.localeCompare(b.invoiceNo));
+  const el=document.getElementById('payInv');
+  el.innerHTML='<option value="">— Select open invoice —</option>'+open.map(i=>`<option value="${i.id}">${esc(i.invoiceNo)} — ${esc(accName(i.accountId))} (Bal: ${fmt(invBalance(i))})</option>`).join('');
+  if(sel) el.value=sel;
+}
+
+// ── Dashboard ──
+function renderDash(){
+  const year=D.settings.dashYear, ytd=ytdTotals(year), rate=ytd.billed>0?(ytd.collected/ytd.billed)*100:0;
+  document.getElementById('dashMetrics').innerHTML=`
+    <div class="mcard"><div class="mlabel">Total Billed YTD</div><div class="mvalue">${fmt(ytd.billed)}</div></div>
+    <div class="mcard red"><div class="mlabel">Total Outstanding</div><div class="mvalue">${fmt(ytd.outstanding)}</div></div>
+    <div class="mcard green"><div class="mlabel">Total Collected</div><div class="mvalue">${fmt(ytd.collected)}</div></div>
+    <div class="mcard"><div class="mlabel">Today's Collections</div><div class="mvalue">${fmt(todayCollect())}</div></div>
+    <div class="mcard"><div class="mlabel">Payments Today</div><div class="mvalue">${todayCount()}</div></div>
+    <div class="mcard red"><div class="mlabel">Open Invoices</div><div class="mvalue">${countOpen()}</div></div>
+    <div class="mcard green"><div class="mlabel">Collection Rate</div><div class="mvalue">${rate.toFixed(1)}%</div></div>
+  `;
+  const over=overdueList();
+  document.getElementById('overdueAlert').innerHTML=over.length?`
+    <div class="alert">
+      <h4>⚠ ${over.length} Overdue Invoice${over.length>1?'s':''}</h4>
+      <ul>${over.slice(0,6).map(i=>`<li>${esc(i.invoiceNo)} — ${esc(accName(i.accountId))} — Balance ${fmt(invBalance(i))} (Due ${i.dueDate})</li>`).join('')}${over.length>6?`<li>…and ${over.length-6} more</li>`:''}</ul>
+    </div>`:'';
+  document.getElementById('collRateBox').innerHTML=`
+    <div style="display:flex;justify-content:space-between;margin-bottom:0.3rem;font-size:0.82rem"><span>${rate.toFixed(1)}% collected</span><span style="color:var(--muted)">${fmt(ytd.collected)} of ${fmt(ytd.billed)}</span></div>
+    <div class="prog-wrap"><div class="prog ${progClass(rate)}" style="width:${Math.min(100,rate)}%"></div></div>
+  `;
+  let tA=0,tP=0;
+  D.advancePayments.forEach(a=>{ tA+=Number(a.advanceAmount)||0; tP+=Number(a.appliedAmount)||0; });
+  document.getElementById('advSummary').innerHTML=`
+    <div style="display:flex;flex-direction:column;gap:0.5rem;font-size:0.85rem">
+      <div style="display:flex;justify-content:space-between"><span>Total Advance Credits</span><strong>${fmt(tA)}</strong></div>
+      <div style="display:flex;justify-content:space-between"><span>Total Applied</span><strong>${fmt(tP)}</strong></div>
+      <div style="display:flex;justify-content:space-between;padding-top:0.4rem;border-top:1px solid var(--border)"><span style="font-weight:700">Remaining Credit</span><strong style="color:var(--green)">${fmt(tA-tP)}</strong></div>
+    </div>
+  `;
+  const ms=monthlyStats(year);
+  document.getElementById('monthTbody').innerHTML=ms.map(m=>`
+    <tr><td>${m.month}</td><td class="text-right text-mono">${fmt(m.billed)}</td><td class="text-right text-mono">${fmt(m.collected)}</td>
+    <td class="text-right text-mono">${fmt(m.outstanding)}</td><td class="text-right">${m.billed?m.rate.toFixed(1)+'%':'—'}</td>
+    <td>${m.billed?statusBadge(m.status):'—'}</td></tr>`).join('');
+  const recent=[...D.payments].sort((a,b)=>b.date.localeCompare(a.date)).slice(0,8);
+  document.getElementById('recentPayBody').innerHTML=recent.map(p=>{
+    const i=getInv(p.invoiceId);
+    return `<tr><td class="text-mono">${esc(p.paymentNo)}</td><td>${p.date}</td><td>${esc(accName(p.accountId))}</td><td class="text-mono">${i?esc(i.invoiceNo):'—'}</td><td class="text-right text-mono">${fmt((Number(p.cash)||0)+(Number(p.advance)||0))}</td><td>${esc(p.method)}</td></tr>`;
+  }).join('')||'<tr class="no-data"><td colspan="6">No payments yet.</td></tr>';
+  renderChart(ms);
+}
+
+function renderChart(ms){
+  const ctx=document.getElementById('monthChart');
+  if(!ctx||typeof Chart==='undefined') return;
+  if(mChart) mChart.destroy();
+  mChart=new Chart(ctx,{type:'bar',data:{labels:ms.map(m=>m.month),datasets:[
+    {label:'Billed',data:ms.map(m=>m.billed),backgroundColor:'#0d1b36',borderRadius:4},
+    {label:'Collected',data:ms.map(m=>m.collected),backgroundColor:'#e8a020',borderRadius:4}
+  ]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{position:'top'},tooltip:{callbacks:{label:c=>c.dataset.label+': '+fmt(c.raw)}}},scales:{y:{ticks:{callback:v=>'₱'+Number(v).toLocaleString()}}}}});
+}
+
+// ── Billing ──
+function renderBilling(){
+  const q=(document.getElementById('invSearch').value||'').toLowerCase();
+  const sf=document.getElementById('invStFilter').value;
+  const yf=parseInt(document.getElementById('invYrFilter').value,10);
+  let rows=[...D.invoices].sort((a,b)=>b.date.localeCompare(a.date)).filter(inv=>{
+    const n=accName(inv.accountId).toLowerCase();
+    if(q&&!inv.invoiceNo.toLowerCase().includes(q)&&!n.includes(q)) return false;
+    if(sf&&invStatus(inv)!==sf) return false;
+    if(yf&&inv.billingYear!==yf) return false;
+    return true;
+  });
+  document.getElementById('invBody').innerHTML=rows.map(inv=>{
+    const due=invDue(inv),paid=invPaid(inv.id),bal=invBalance(inv),st=invStatus(inv),od=isOverdue(inv);
+    const adv=D.advancePayments.find(a=>a.accountId===inv.accountId&&a.year===inv.billingYear);
+    const hasAdv=adv&&((Number(adv.advanceAmount)||0)-(Number(adv.appliedAmount)||0))>0;
+    return `<tr class="${od?'tr-overdue':''}">
+      <td class="text-mono">${esc(inv.invoiceNo)}</td><td>${inv.date}</td>
+      <td>${esc(accName(inv.accountId))}${hasAdv?` <span class="adv-pill">💰 Adv</span>`:''}</td>
+      <td>${billingLabel(inv)}</td>
+      <td class="text-right text-mono">${fmt(inv.amount)}</td>
+      <td class="text-right text-mono">${fmt(inv.discount||0)}</td>
+      <td class="text-right text-mono">${fmt(due)}</td>
+      <td class="text-right text-mono">${fmt(paid)}</td>
+      <td class="text-right text-mono">${fmt(bal)}</td>
+      <td>${inv.dueDate||'—'}</td>
+      <td>${statusBadge(st)}</td>
+      <td class="no-print"><div class="btn-group">
+        <button class="btn btn-ghost btn-xs" data-edit-inv="${inv.id}">Edit</button>
+        ${st!=='PAID'?`<button class="btn btn-gold btn-xs" data-pay-inv="${inv.id}">Pay</button>`:''}
+        <button class="btn btn-ghost btn-xs" data-print-inv="${inv.id}">Print</button>
+        <button class="btn btn-navy btn-xs" data-view-inv="${inv.id}">View</button>
+        <button class="btn btn-ghost btn-xs" data-dup-inv="${inv.id}">Copy</button>
+        ${paid===0?`<button class="btn btn-red btn-xs" data-del-inv="${inv.id}">Del</button>`:''}
+      </div></td>
+    </tr>`;
+  }).join('')||'<tr class="no-data"><td colspan="12">No invoices found.</td></tr>';
+}
+
+// ── Collections ──
+function renderCollections(){
+  const q=(document.getElementById('paySearch').value||'').toLowerCase();
+  const from=document.getElementById('payFrom').value, to=document.getElementById('payTo').value;
+  let rows=[...D.payments].sort((a,b)=>b.date.localeCompare(a.date)).filter(p=>{
+    const i=getInv(p.invoiceId);
+    const h=(p.paymentNo+' '+accName(p.accountId)+' '+(i?i.invoiceNo:'')).toLowerCase();
+    if(q&&!h.includes(q)) return false;
+    if(from&&p.date<from) return false;
+    if(to&&p.date>to) return false;
+    return true;
+  });
+  document.getElementById('payBody').innerHTML=rows.map(p=>{
+    const i=getInv(p.invoiceId),cash=Number(p.cash)||0,adv=Number(p.advance)||0;
+    return `<tr>
+      <td class="text-mono">${esc(p.paymentNo)}</td><td>${p.date}</td>
+      <td>${esc(accName(p.accountId))}</td>
+      <td class="text-mono">${i?esc(i.invoiceNo):'—'}</td>
+      <td class="text-right text-mono">${fmt(cash)}</td>
+      <td class="text-right text-mono">${adv>0?`<span class="adv-pill">💰 ${fmt(adv)}</span>`:'—'}</td>
+      <td class="text-right text-mono">${fmt(cash+adv)}</td>
+      <td>${esc(p.method)}</td>
+      <td>${esc(p.reference||'')}</td>
+      <td class="no-print"><div class="btn-group">
+        <button class="btn btn-ghost btn-xs" data-receipt-pay="${p.id}">Receipt</button>
+        <button class="btn btn-ghost btn-xs" data-edit-pay="${p.id}">Edit</button>
+        <button class="btn btn-red btn-xs" data-del-pay="${p.id}">Delete</button>
+      </div></td>
+    </tr>`;
+  }).join('')||'<tr class="no-data"><td colspan="10">No payments found.</td></tr>';
+}
+
+// ── Accounts ──
+function accMonthRec(accountId, year){
+  const months=Array(12).fill(0); let total=0;
+  D.invoices.forEach(inv=>{ if(inv.accountId!==accountId||inv.billingYear!==year) return; const b=invBalance(inv); if(b<=0) return; months[inv.billingMonth]+=b; total+=b; });
+  return {months,total};
+}
+function renderAccounts(){
+  const q=(document.getElementById('accSearch').value||'').toLowerCase();
+  const tf=document.getElementById('accTypeFilter').value;
+  const year=parseInt(document.getElementById('accYrFilter').value,10)||D.settings.dashYear;
+  let list=D.accounts.filter(a=>(!q||a.name.toLowerCase().includes(q))&&(!tf||a.type===tf));
+  const types=['Private PO','LGU PO'];
+  let html='',mTots=Array(12).fill(0),grand=0;
+  types.forEach(type=>{
+    const grp=list.filter(a=>a.type===type); if(!grp.length) return;
+    html+=`<div class="type-header">${type} (${grp.length} accounts) — ${year}</div>`;
+    html+=`<div class="table-wrap"><table><thead><tr><th>Account</th><th>Type</th>${MONTHS.map(m=>`<th class="text-right">${m}</th>`).join('')}<th class="text-right">Total</th><th class="no-print">Actions</th></tr></thead><tbody>`;
+    const stm=Array(12).fill(0); let sg=0;
+    grp.forEach(acc=>{
+      const rec=accMonthRec(acc.id,year);
+      sg+=rec.total; rec.months.forEach((v,i)=>stm[i]+=v);
+      const adv=D.advancePayments.find(a=>a.accountId===acc.id&&a.year===year);
+      const rem=adv?Math.max(0,(Number(adv.advanceAmount)||0)-(Number(adv.appliedAmount)||0)):0;
+      html+=`<tr><td>${esc(acc.name)}${rem>0?` <span class="adv-pill">💰 ${fmt(rem)}</span>`:''}</td><td>${acc.type}</td>${rec.months.map(v=>`<td class="text-right text-mono">${v>0?fmt(v):'—'}</td>`).join('')}<td class="text-right text-mono"><strong>${rec.total>0?fmt(rec.total):'—'}</strong></td><td class="no-print"><div class="btn-group"><button class="btn btn-gold btn-xs" data-statement="${acc.id}">Statement</button><button class="btn btn-ghost btn-xs" data-edit-account="${acc.id}">Edit</button><button class="btn btn-red btn-xs" data-del-account="${acc.id}">Del</button></div></td></tr>`;
+    });
+    html+=`<tr class="tr-total"><td colspan="2"><strong>${type} Subtotal</strong></td>${stm.map(v=>`<td class="text-right text-mono">${v>0?fmt(v):'—'}</td>`).join('')}<td class="text-right text-mono">${fmt(sg)}</td><td class="no-print"></td></tr></tbody></table></div>`;
+    stm.forEach((v,i)=>mTots[i]+=v); grand+=sg;
+  });
+  html+=`<div class="table-wrap" style="margin-top:1rem"><table><tr class="tr-total"><td colspan="2"><strong>GRAND TOTAL (${year})</strong></td>${mTots.map(v=>`<td class="text-right text-mono">${v>0?fmt(v):'—'}</td>`).join('')}<td class="text-right text-mono"><strong>${fmt(grand)}</strong></td><td class="no-print"></td></tr></table></div>`;
+  document.getElementById('accTables').innerHTML=html||'<p style="color:var(--muted);padding:1rem">No accounts match filters.</p>';
+}
+
+// ── Advance ──
+function renderAdvance(){
+  let tA=0,tP=0,tR=0;
+  document.getElementById('advBody').innerHTML=D.advancePayments.map(a=>{
+    const rem=(Number(a.advanceAmount)||0)-(Number(a.appliedAmount)||0);
+    tA+=Number(a.advanceAmount)||0; tP+=Number(a.appliedAmount)||0; tR+=rem;
+    return `<tr>
+      <td>${esc(accName(a.accountId))}</td><td>${a.year}</td>
+      <td class="text-right text-mono">${fmt(a.advanceAmount)}</td>
+      <td class="text-right text-mono">${fmt(a.appliedAmount)}</td>
+      <td class="text-right text-mono"><strong style="color:${rem>0?'var(--green)':'var(--muted)'}">${fmt(rem)}</strong></td>
+      <td class="no-print"><div class="btn-group">
+        <button class="btn btn-ghost btn-xs" data-edit-adv="${a.id}">Edit</button>
+        <button class="btn btn-red btn-xs" data-del-adv="${a.id}">Del</button>
+      </div></td>
+    </tr>`;
+  }).join('')||'<tr class="no-data"><td colspan="6">No advance payments recorded.</td></tr>';
+  document.getElementById('advFoot').innerHTML=D.advancePayments.length?`<tr class="tr-total"><td colspan="2"><strong>Totals</strong></td><td class="text-right text-mono">${fmt(tA)}</td><td class="text-right text-mono">${fmt(tP)}</td><td class="text-right text-mono">${fmt(tR)}</td><td class="no-print"></td></tr>`:'';
+}
+
+// ── Reports ──
+function renderReports(){
+  const buckets=[
+    {l:'Current (not overdue)',min:-9999,max:0,c:0,a:0},
+    {l:'1–30 days overdue',min:1,max:30,c:0,a:0},
+    {l:'31–60 days overdue',min:31,max:60,c:0,a:0},
+    {l:'61–90 days overdue',min:61,max:90,c:0,a:0},
+    {l:'90+ days overdue',min:91,max:99999,c:0,a:0}
+  ];
+  D.invoices.forEach(inv=>{ if(invStatus(inv)==='PAID') return; const bal=invBalance(inv),d=daysPast(inv),b=buckets.find(x=>d>=x.min&&d<=x.max); if(b){b.c++;b.a+=bal;} });
+  document.getElementById('agingBody').innerHTML=buckets.map(b=>`<tr><td>${b.l}</td><td class="text-right">${b.c}</td><td class="text-right text-mono">${fmt(b.a)}</td></tr>`).join('');
+  const dm={};
+  D.invoices.forEach(inv=>{ const b=invBalance(inv); if(b<=0) return; dm[inv.accountId]=(dm[inv.accountId]||0)+b; });
+  const top=Object.entries(dm).map(([aid,amt])=>({aid,amt})).sort((a,b)=>b.amt-a.amt).slice(0,10);
+  document.getElementById('topDebtBody').innerHTML=top.map(d=>`<tr><td>${esc(accName(d.aid))}</td><td class="text-right text-mono">${fmt(d.amt)}</td></tr>`).join('')||'<tr class="no-data"><td colspan="2">All balances settled!</td></tr>';
+  const logs=[...(D.actLog||[])].sort((a,b)=>b.ts.localeCompare(a.ts)).slice(0,50);
+  document.getElementById('actLogBody').innerHTML=logs.map(l=>`<tr><td style="white-space:nowrap">${new Date(l.ts).toLocaleString()}</td><td>${esc(l.user)}</td><td><span class="badge b-role">${esc(l.action)}</span></td><td>${esc(l.details)}</td></tr>`).join('')||'<tr class="no-data"><td colspan="4">No activity.</td></tr>';
+}
+
+// ── Users ──
+function renderUsers(){
+  document.getElementById('userBody').innerHTML=(D.users||[]).map(u=>{
+    const locked=u.lockedUntil&&new Date(u.lockedUntil)>new Date();
+    const st=u.status==='inactive'?'<span class="badge b-unpaid">Inactive</span>':locked?'<span class="badge b-partial">Locked</span>':'<span class="badge b-paid">Active</span>';
+    return `<tr>
+      <td><strong>${esc(u.username)}</strong></td>
+      <td>${esc(u.fullName||'—')}</td>
+      <td><span class="badge ${u.role==='Admin'?'b-admin':'b-cashier'}">${u.role}</span></td>
+      <td>${st}</td>
+      <td style="font-size:0.78rem">${u.lastLogin?new Date(u.lastLogin).toLocaleString():'Never'}</td>
+      <td>${u.failedAttempts||0}</td>
+      <td class="no-print"><div class="btn-group">
+        <button class="btn btn-ghost btn-xs" data-edit-user="${u.id}">Edit</button>
+        ${locked?`<button class="btn btn-green btn-xs" data-unlock-user="${u.id}">Unlock</button>`:''}
+        ${u.username!==D.session.user?`<button class="btn btn-red btn-xs" data-del-user="${u.id}">Del</button>`:'<span style="font-size:0.72rem;color:var(--muted)">(you)</span>'}
+      </div></td>
+    </tr>`;
+  }).join('')||'<tr class="no-data"><td colspan="7">No users.</td></tr>';
+}
+
+// ── Access ──
+function renderAccess(){
+  const s=D.session;
+  document.getElementById('sessBox').innerHTML=`<strong>Current Session:</strong> ${esc(s.fullName||s.user)} (${esc(s.role)}) — Signed in at ${s.signedInAt?new Date(s.signedInAt).toLocaleString():'—'}`;
+  let logs=[...D.accessLog].sort((a,b)=>b.ts.localeCompare(a.ts));
+  const uf=document.getElementById('accessUserFilter').value;
+  if(uf) logs=logs.filter(l=>l.user===uf);
+  document.getElementById('accessBody').innerHTML=logs.map(l=>`
+    <tr><td style="white-space:nowrap">${new Date(l.ts).toLocaleString()}</td><td>${esc(l.user)}</td><td>${esc(l.role||'—')}</td>
+    <td><span class="badge ${l.action==='SIGN_IN'?'b-in':'b-out'}">${l.action}</span></td><td style="font-size:0.72rem;color:var(--muted)">—</td></tr>`).join('')||'<tr class="no-data"><td colspan="5">No log entries.</td></tr>';
+  const users=[...new Set(D.accessLog.map(l=>l.user))];
+  const sel=document.getElementById('accessUserFilter'),cur=sel.value;
+  sel.innerHTML='<option value="">All Users</option>'+users.map(u=>`<option value="${esc(u)}">${esc(u)}</option>`).join('');
+  sel.value=cur;
+}
+
+function refreshAll(){
+  updateTopbar();
+  renderDash();
+  renderBilling();
+  renderCollections();
+  renderAccounts();
+  renderAdvance();
+  renderReports();
+  renderUsers();
+  renderAccess();
+  populateAccDrops();
+}
+
+// ── Invoice Modal ──
+function openInvModal(editId, viewOnly){
+  const fields=['invDate','invAcc','invMonth','invYear','invAmt','invDisc','invDue','invRemarks'];
+  fields.forEach(id=>{ const el=document.getElementById(id); if(el){el.disabled=false;el.classList.remove('invalid');} });
+  document.getElementById('invViewInfo').style.display='none';
+  document.getElementById('btnSaveInv').style.display='';
+  document.getElementById('invEditId').value=editId||'';
+  document.getElementById('mInvTitle').textContent=editId?(viewOnly?'View Invoice':'Edit Invoice'):'New Invoice';
+  if(editId){
+    const inv=getInv(editId);
+    document.getElementById('invNo').value=inv.invoiceNo;
+    document.getElementById('invDate').value=inv.date;
+    document.getElementById('invAcc').value=inv.accountId;
+    document.getElementById('invMonth').value=inv.billingMonth;
+    document.getElementById('invYear').value=inv.billingYear;
+    document.getElementById('invAmt').value=inv.amount;
+    document.getElementById('invDisc').value=inv.discount||0;
+    document.getElementById('invDue').value=inv.dueDate||'';
+    document.getElementById('invRemarks').value=inv.remarks||'';
+    if(viewOnly){
+      fields.forEach(id=>{ const el=document.getElementById(id); if(el) el.disabled=true; });
+      document.getElementById('btnSaveInv').style.display='none';
+      document.getElementById('invViewInfo').style.display='block';
+      document.getElementById('vi-due').textContent=fmt(invDue(inv));
+      document.getElementById('vi-paid').textContent=fmt(invPaid(inv.id));
+      document.getElementById('vi-bal').textContent=fmt(invBalance(inv));
+      document.getElementById('vi-status').innerHTML=statusBadge(invStatus(inv));
+    }
+  } else {
+    const t=new Date(),y=t.getFullYear(),m=t.getMonth();
+    document.getElementById('invNo').value=previewInvNo(y);
+    document.getElementById('invDate').value=today();
+    document.getElementById('invAcc').value='';
+    document.getElementById('invMonth').value=m;
+    document.getElementById('invYear').value=y;
+    document.getElementById('invAmt').value='';
+    document.getElementById('invDisc').value=0;
+    document.getElementById('invDue').value=defaultDue(y,m);
+    document.getElementById('invRemarks').value='';
+  }
+  openM('mInvoice');
+}
+
+function saveInvoice(){
+  const date=document.getElementById('invDate').value;
+  const accountId=document.getElementById('invAcc').value;
+  const amount=document.getElementById('invAmt').value;
+  let v=true;
+  [['invDate',date],['invAcc',accountId],['invAmt',amount]].forEach(([id,val])=>{
+    const el=document.getElementById(id);
+    if(!val){el.classList.add('invalid');v=false;}else el.classList.remove('invalid');
+  });
+  if(!v) return;
+  const editId=document.getElementById('invEditId').value;
+  const bm=parseInt(document.getElementById('invMonth').value,10);
+  const by=parseInt(document.getElementById('invYear').value,10);
+  const inv={id:editId||uid(),invoiceNo:editId?document.getElementById('invNo').value:nextInvNo(by),accountId,date,billingMonth:bm,billingYear:by,amount:parseFloat(amount),discount:parseFloat(document.getElementById('invDisc').value)||0,dueDate:document.getElementById('invDue').value||defaultDue(by,bm),remarks:document.getElementById('invRemarks').value.trim()};
+  const idx=D.invoices.findIndex(i=>i.id===inv.id);
+  const isNew=idx<0;
+  if(idx>=0) D.invoices[idx]=inv; else D.invoices.push(inv);
+  logAct(isNew?'INVOICE_CREATED':'INVOICE_UPDATED',inv.invoiceNo+' — '+accName(accountId));
+  closeM('mInvoice');
+  saveData();
+  showToast(isNew?'Invoice created: '+inv.invoiceNo:'Invoice updated','ok');
+}
+
+function dupInvoice(srcId){
+  const src=getInv(srcId); if(!src) return;
+  const by=src.billingYear;
+  const inv={id:uid(),invoiceNo:nextInvNo(by),accountId:src.accountId,date:today(),billingMonth:src.billingMonth,billingYear:by,amount:src.amount,discount:src.discount||0,dueDate:defaultDue(by,src.billingMonth),remarks:(src.remarks||'')+'(copy)'};
+  D.invoices.push(inv);
+  logAct('INVOICE_COPIED',inv.invoiceNo+' from '+src.invoiceNo);
+  saveData();
+  showToast('Copied as '+inv.invoiceNo,'ok');
+}
+
+function showInvPrint(id){
+  const inv=getInv(id); if(!inv) return;
+  const acc=D.accounts.find(a=>a.id===inv.accountId);
+  const due=invDue(inv),paid=invPaid(inv.id);
+  document.getElementById('invPrintArea').innerHTML=`
+    <div class="receipt">
+      <div class="receipt-head">
+        <div class="co">STARGAS CORPORATION</div>
+        <div class="branch">${BRANCH}</div>
+        <div class="type">BILLING INVOICE</div>
+      </div>
+      <div class="receipt-row"><span>Invoice #</span><strong>${esc(inv.invoiceNo)}</strong></div>
+      <div class="receipt-row"><span>Date</span><span>${inv.date}</span></div>
+      <div class="receipt-row"><span>Due Date</span><span>${inv.dueDate||'—'}</span></div>
+      <div class="receipt-row"><span>Bill To</span><span>${esc(acc?acc.name:'')}</span></div>
+      <div class="receipt-row"><span>Account Type</span><span>${acc?acc.type:''}</span></div>
+      <div class="receipt-row"><span>Billing Period</span><span>${billingLabel(inv)}</span></div>
+      <hr style="border:none;border-top:1px dashed #ddd;margin:0.75rem 0">
+      <div class="receipt-row"><span>LPG Amount</span><span>${fmt(inv.amount)}</span></div>
+      <div class="receipt-row"><span>Discount</span><span>${fmt(inv.discount||0)}</span></div>
+      <div class="receipt-total"><span>Amount Due</span><span>${fmt(due)}</span></div>
+      <div class="receipt-row"><span>Amount Paid</span><span>${fmt(paid)}</span></div>
+      <div class="receipt-row"><span>Balance</span><span>${fmt(invBalance(inv))}</span></div>
+      <div class="receipt-row"><span>Status</span><span>${invStatus(inv)}</span></div>
+      ${inv.remarks?`<p style="margin-top:1rem;font-size:0.8rem;color:#666">Remarks: ${esc(inv.remarks)}</p>`:''}
+      <div class="receipt-stamp">Please remit payment before the due date. Thank you.</div>
+    </div>`;
+  openM('mInvPrint');
+}
+
+// ── Payment Modal ──
+function openPayModal(editId, prefillInv){
+  document.getElementById('payEditId').value=editId||'';
+  document.getElementById('mPayTitle').textContent=editId?'Edit Payment':'Record Payment';
+  populateOpenInvoices(prefillInv||'');
+  document.getElementById('advCreditNotice').style.display='none';
+  if(editId){
+    const p=D.payments.find(x=>x.id===editId);
+    document.getElementById('payNo').value=p.paymentNo;
+    document.getElementById('payDate').value=p.date;
+    document.getElementById('payInv').value=p.invoiceId;
+    document.getElementById('payAmt').value=p.cash||0;
+    document.getElementById('payAdvAmt').value=p.advance||0;
+    document.getElementById('payMethod').value=p.method;
+    document.getElementById('payRef').value=p.reference||'';
+    document.getElementById('payRem').value=p.remarks||'';
+    updatePayHint();
+  } else {
+    document.getElementById('payNo').value=previewPayNo(new Date().getFullYear());
+    document.getElementById('payDate').value=today();
+    document.getElementById('payAmt').value='';
+    document.getElementById('payAdvAmt').value='0';
+    document.getElementById('payMethod').value='Cash';
+    document.getElementById('payRef').value='';
+    document.getElementById('payRem').value='';
+    if(prefillInv) updatePayHint();
+  }
+  openM('mPayment');
+}
+
+function updatePayHint(){
+  const invId=document.getElementById('payInv').value;
+  const hint=document.getElementById('payInvHint');
+  const advHint=document.getElementById('payAdvHint');
+  const notice=document.getElementById('advCreditNotice');
+  const advMsg=document.getElementById('advCreditMsg');
+  if(!invId){
+    hint.textContent='';
+    advHint.textContent='Available: —';
+    notice.style.display='none';
+    return;
+  }
+  const inv=getInv(invId); if(!inv) return;
+  const bal=invBalance(inv);
+  const rem=advRemaining(inv.accountId,inv.billingYear);
+  hint.textContent='Balance due: '+fmt(bal);
+  advHint.textContent='Available advance credit: '+fmt(rem);
+  // Show advance notice
+  if(rem>0){
+    notice.style.display='block';
+    advMsg.textContent=`This account has ${fmt(rem)} advance credit available for ${inv.billingYear}. You can apply up to ${fmt(Math.min(rem,bal))} to reduce the cash payment.`;
+  } else {
+    notice.style.display='none';
+  }
+  const editId=document.getElementById('payEditId').value;
+  if(!editId){
+    document.getElementById('payAmt').value=bal.toFixed(2);
+    document.getElementById('payAdvAmt').value='0';
+  }
+}
+
+function applyAdvCredit(){
+  const invId=document.getElementById('payInv').value; if(!invId) return;
+  const inv=getInv(invId);
+  const bal=invBalance(inv);
+  const rem=advRemaining(inv.accountId,inv.billingYear);
+  const useAdv=Math.min(rem,bal);
+  document.getElementById('payAdvAmt').value=useAdv.toFixed(2);
+  document.getElementById('payAmt').value=Math.max(0,bal-useAdv).toFixed(2);
+  showToast(`Applied ${fmt(useAdv)} advance credit`,'ok');
+}
+
+function payFullBal(){
+  const invId=document.getElementById('payInv').value;
+  if(!invId){showToast('Select an invoice first','err');return;}
+  const inv=getInv(invId), bal=invBalance(inv);
+  const rem=advRemaining(inv.accountId,inv.billingYear);
+  const useAdv=Math.min(rem,bal);
+  document.getElementById('payAdvAmt').value=useAdv.toFixed(2);
+  document.getElementById('payAmt').value=Math.max(0,bal-useAdv).toFixed(2);
+}
+
+function savePayment(){
+  const date=document.getElementById('payDate').value;
+  const invoiceId=document.getElementById('payInv').value;
+  const cashAmt=parseFloat(document.getElementById('payAmt').value)||0;
+  const advAmt=parseFloat(document.getElementById('payAdvAmt').value)||0;
+  let v=true;
+  [['payDate',date],['payInv',invoiceId]].forEach(([id,val])=>{ const el=document.getElementById(id); if(!val){el.classList.add('invalid');v=false;}else el.classList.remove('invalid'); });
+  const pa=document.getElementById('payAmt');
+  if(cashAmt<=0&&advAmt<=0){pa.classList.add('invalid');v=false;}else pa.classList.remove('invalid');
+  if(!v) return;
+  const inv=getInv(invoiceId); if(!inv) return;
+  const editId=document.getElementById('payEditId').value;
+  const oldPay=editId?D.payments.find(p=>p.id===editId):null;
+  const oldAdv=oldPay?(Number(oldPay.advance)||0):0;
+  const avail=advRemaining(inv.accountId,inv.billingYear)+oldAdv;
+  if(advAmt>avail+0.001){showToast('Advance credit exceeds available balance','err');return;}
+  const existPaid=invPaid(invoiceId);
+  const oldTotal=oldPay?(Number(oldPay.cash)+oldAdv):0;
+  if(existPaid-oldTotal+cashAmt+advAmt>invDue(inv)+0.001){showToast('Total payment exceeds invoice balance','err');return;}
+  // Adjust advance tracking
+  if(oldPay&&oldAdv) adjAdvance(oldPay.accountId,inv.billingYear,-oldAdv);
+  if(advAmt>0) adjAdvance(inv.accountId,inv.billingYear,advAmt);
+  const py=new Date(date).getFullYear();
+  const pay={id:editId||uid(),paymentNo:editId?document.getElementById('payNo').value:nextPayNo(py),invoiceId,accountId:inv.accountId,date,cash:cashAmt,advance:advAmt,method:document.getElementById('payMethod').value,reference:document.getElementById('payRef').value.trim(),remarks:document.getElementById('payRem').value.trim(),recordedBy:D.session.user||'Unknown'};
+  const idx=D.payments.findIndex(p=>p.id===pay.id);
+  const isNew=idx<0;
+  if(idx>=0) D.payments[idx]=pay; else D.payments.push(pay);
+  logAct(isNew?'PAYMENT_RECORDED':'PAYMENT_UPDATED',pay.paymentNo+' '+fmt(cashAmt+advAmt)+' — '+inv.invoiceNo);
+  closeM('mPayment');
+  saveData();
+  showToast('Payment saved: '+pay.paymentNo,'ok');
+  showReceipt(pay.id);
+}
+
+function showReceipt(pid){
+  const p=D.payments.find(x=>x.id===pid); if(!p) return;
+  const inv=getInv(p.invoiceId);
+  const cash=Number(p.cash)||0,adv=Number(p.advance)||0;
+  document.getElementById('receiptArea').innerHTML=`
+    <div class="receipt">
+      <div class="receipt-head">
+        <div class="co">STARGAS CORPORATION</div>
+        <div class="branch">${BRANCH}</div>
+        <div class="type">OFFICIAL RECEIPT</div>
+      </div>
+      <div class="receipt-row"><span>OR Number</span><strong>${esc(p.paymentNo)}</strong></div>
+      <div class="receipt-row"><span>Date</span><span>${p.date}</span></div>
+      <div class="receipt-row"><span>Received From</span><span>${esc(accName(p.accountId))}</span></div>
+      <div class="receipt-row"><span>Invoice #</span><span>${inv?esc(inv.invoiceNo):'—'}</span></div>
+      <div class="receipt-row"><span>Billing Period</span><span>${inv?billingLabel(inv):'—'}</span></div>
+      <div class="receipt-row"><span>Method</span><span>${esc(p.method)}</span></div>
+      ${p.reference?`<div class="receipt-row"><span>Reference</span><span>${esc(p.reference)}</span></div>`:''}
+      <hr style="border:none;border-top:1px dashed #ddd;margin:0.75rem 0">
+      <div class="receipt-row"><span>Cash / Bank</span><span>${fmt(cash)}</span></div>
+      ${adv>0?`<div class="receipt-row"><span>Advance Credit Applied</span><span>${fmt(adv)}</span></div>`:''}
+      <div class="receipt-total"><span>Total Received</span><span>${fmt(cash+adv)}</span></div>
+      ${p.remarks?`<p style="margin-top:1rem;font-size:0.8rem;color:#666">Remarks: ${esc(p.remarks)}</p>`:''}
+      <div class="receipt-stamp">Recorded by: ${esc(p.recordedBy)} • Thank you for your payment.</div>
+    </div>`;
+  openM('mReceipt');
+}
+
+// ── Statement ──
+function openStatement(accountId){
+  const acc=D.accounts.find(a=>a.id===accountId); if(!acc) return;
+  document.getElementById('mStatTitle').textContent='Statement — '+acc.name;
+  const entries=[];
+  D.invoices.filter(i=>i.accountId===accountId).forEach(inv=>entries.push({date:inv.date,type:'Invoice',ref:inv.invoiceNo,desc:billingLabel(inv)+(inv.remarks?' — '+inv.remarks:''),debit:invDue(inv),credit:0,sort:inv.date+'A'+inv.invoiceNo}));
+  D.payments.filter(p=>p.accountId===accountId).forEach(p=>entries.push({date:p.date,type:'Payment',ref:p.paymentNo,desc:'Payment for '+(getInv(p.invoiceId)?.invoiceNo||'—')+(p.advance>0?' (incl. advance)':''),debit:0,credit:(Number(p.cash)||0)+(Number(p.advance)||0),sort:p.date+'B'+p.paymentNo}));
+  entries.sort((a,b)=>a.sort.localeCompare(b.sort));
+  let run=0,tD=0,tC=0;
+  document.getElementById('statBody').innerHTML=entries.map(e=>{run+=e.debit-e.credit;tD+=e.debit;tC+=e.credit;return`<tr><td>${e.date}</td><td>${e.type}</td><td class="text-mono">${esc(e.ref)}</td><td>${esc(e.desc)}</td><td class="text-right text-mono">${e.debit?fmt(e.debit):'—'}</td><td class="text-right text-mono">${e.credit?fmt(e.credit):'—'}</td><td class="text-right text-mono">${fmt(run)}</td></tr>`}).join('')||'<tr class="no-data"><td colspan="7">No transactions.</td></tr>';
+  document.getElementById('statSummary').innerHTML=`<div class="ss-card"><div class="ss-label">Total Invoiced</div><div class="ss-val">${fmt(tD)}</div></div><div class="ss-card"><div class="ss-label">Total Collected</div><div class="ss-val">${fmt(tC)}</div></div><div class="ss-card"><div class="ss-label">Balance Due</div><div class="ss-val" style="color:var(--${tD-tC>0?'red':'green'})">${fmt(tD-tC)}</div></div>`;
+  openM('mStatement');
+}
+
+// ── Account Modal ──
+function openAccModal(editId){
+  document.getElementById('accEditId').value=editId||'';
+  document.getElementById('mAccTitle').textContent=editId?'Edit Account':'Add Account';
+  if(editId){ const a=D.accounts.find(x=>x.id===editId); document.getElementById('accName').value=a.name; document.getElementById('accType').value=a.type; document.getElementById('accCode').value=a.code||''; document.getElementById('accountContact') && (document.getElementById('accountContact').value=a.contact||''); document.getElementById('accContact') && (document.getElementById('accContact').value=a.contact||''); }
+  else { document.getElementById('accName').value=''; document.getElementById('accType').value='Private PO'; document.getElementById('accCode').value=''; }
+  openM('mAccount');
+}
+
+function saveAccount(){
+  const name=document.getElementById('accName').value.trim();
+  if(!name){document.getElementById('accName').classList.add('invalid');return;}
+  document.getElementById('accName').classList.remove('invalid');
+  const acc={id:document.getElementById('accEditId').value||uid(),name,type:document.getElementById('accType').value,code:document.getElementById('accCode').value.trim(),contact:(document.getElementById('accContact')?.value||'').trim()};
+  const idx=D.accounts.findIndex(a=>a.id===acc.id);
+  const isNew=idx<0;
+  if(idx>=0) D.accounts[idx]=acc; else D.accounts.push(acc);
+  logAct(isNew?'ACCOUNT_CREATED':'ACCOUNT_UPDATED',acc.name);
+  closeM('mAccount');
+  saveData();
+  showToast('Account saved','ok');
+}
+
+// ── Advance Modal ──
+function openAdvModal(editId){
+  document.getElementById('advEditId').value=editId||'';
+  document.getElementById('mAdvTitle').textContent=editId?'Edit Advance':'Add Advance Payment';
+  if(editId){ const a=D.advancePayments.find(x=>x.id===editId); document.getElementById('advAcc').value=a.accountId; document.getElementById('advYear').value=a.year; document.getElementById('advAmt').value=a.advanceAmount; document.getElementById('advApplied').value=a.appliedAmount||0; }
+  else { document.getElementById('advAcc').value=''; document.getElementById('advYear').value=new Date().getFullYear(); document.getElementById('advAmt').value=''; document.getElementById('advApplied').value=0; }
+  openM('mAdvance');
+}
+
+function saveAdvance(){
+  const accountId=document.getElementById('advAcc').value;
+  const amount=document.getElementById('advAmt').value;
+  if(!accountId||!amount) return;
+  const rec={id:document.getElementById('advEditId').value||uid(),accountId,year:parseInt(document.getElementById('advYear').value,10),advanceAmount:parseFloat(amount),appliedAmount:parseFloat(document.getElementById('advApplied').value)||0};
+  const idx=D.advancePayments.findIndex(a=>a.id===rec.id);
+  if(idx>=0) D.advancePayments[idx]=rec; else D.advancePayments.push(rec);
+  logAct('ADVANCE_SAVED',accName(accountId)+' '+fmt(rec.advanceAmount));
+  closeM('mAdvance');
+  saveData();
+  showToast('Advance payment saved','ok');
+}
+
+// ── User Modal ──
+function openUserModal(editId){
+  document.getElementById('userEditId').value=editId||'';
+  document.getElementById('mUserTitle').textContent=editId?'Edit User':'Add User';
+  document.getElementById('uPassword').value='';
+  if(editId){
+    const u=D.users.find(x=>x.id===editId);
+    document.getElementById('uUsername').value=u.username;
+    document.getElementById('uFullName').value=u.fullName||'';
+    document.getElementById('uRole').value=u.role;
+    document.getElementById('uStatus').value=u.status||'active';
+    document.getElementById('uPassLabel').textContent='New Password (leave blank to keep)';
+    document.getElementById('uPassHint').textContent='Leave blank to keep current password.';
+    document.getElementById('uPassword').placeholder='Leave blank to keep current';
+  } else {
+    document.getElementById('uUsername').value='';
+    document.getElementById('uFullName').value='';
+    document.getElementById('uRole').value='Cashier';
+    document.getElementById('uStatus').value='active';
+    document.getElementById('uPassLabel').textContent='Password *';
+    document.getElementById('uPassHint').textContent='';
+    document.getElementById('uPassword').placeholder='Minimum 6 characters';
+  }
+  openM('mUser');
+}
+
+function saveUser(){
+  const editId=document.getElementById('userEditId').value;
+  const username=document.getElementById('uUsername').value.trim().toLowerCase();
+  const fullName=document.getElementById('uFullName').value.trim();
+  const role=document.getElementById('uRole').value;
+  const status=document.getElementById('uStatus').value;
+  const pw=document.getElementById('uPassword').value;
+  let v=true;
+  const uEl=document.getElementById('uUsername');
+  if(!username){uEl.classList.add('invalid');v=false;}else uEl.classList.remove('invalid');
+  // Check duplicate
+  const dup=D.users.find(u=>u.username.toLowerCase()===username&&u.id!==editId);
+  if(dup){uEl.classList.add('invalid');showToast('Username already exists','err');return;}
+  // Password validation
+  const pwEl=document.getElementById('uPassword');
+  const peEl=document.getElementById('uPassError');
+  if(!editId&&pw.length<6){pwEl.classList.add('invalid');peEl.style.display='block';v=false;}
+  else if(editId&&pw&&pw.length<6){pwEl.classList.add('invalid');peEl.style.display='block';v=false;}
+  else{pwEl.classList.remove('invalid');peEl.style.display='none';}
+  if(!v) return;
+  let user;
+  if(editId){
+    user=D.users.find(u=>u.id===editId);
+    user.username=username; user.fullName=fullName; user.role=role; user.status=status;
+    if(pw) user.pwHash=hashPw(pw);
+  } else {
+    user={id:uid(),username,fullName,role,status,pwHash:hashPw(pw),failedAttempts:0,lockedUntil:null,lastLogin:null};
+    D.users.push(user);
+  }
+  logAct(editId?'USER_UPDATED':'USER_CREATED',username+' ('+role+')');
+  closeM('mUser');
+  saveData();
+  showToast('User saved','ok');
+}
+
+// ── Delete / Confirm ──
+function askDel(type,id,label){
+  pendingDel={type,id};
+  document.getElementById('confirmMsg').textContent=`Delete this ${label}? This cannot be undone.`;
+  document.getElementById('btnConfirm').textContent='Delete';
+  document.getElementById('btnConfirm').className='btn btn-red';
+  openM('mConfirm');
+}
+
+function confirmDel(){
+  if(!pendingDel) return;
+  const{type,id}=pendingDel;
+  if(type==='payment'){
+    const p=D.payments.find(x=>x.id===id);
+    if(p&&p.advance){ const inv=getInv(p.invoiceId); if(inv) adjAdvance(p.accountId,inv.billingYear,-(Number(p.advance)||0)); }
+    D.payments=D.payments.filter(x=>x.id!==id);
+    if(p) logAct('PAYMENT_DELETED',p.paymentNo);
+  }
+  if(type==='invoice'){ const inv=getInv(id); D.invoices=D.invoices.filter(i=>i.id!==id); if(inv) logAct('INVOICE_DELETED',inv.invoiceNo); }
+  if(type==='account'){ D.accounts=D.accounts.filter(a=>a.id!==id); logAct('ACCOUNT_DELETED',id); }
+  if(type==='adv'){ D.advancePayments=D.advancePayments.filter(a=>a.id!==id); logAct('ADVANCE_DELETED',id); }
+  if(type==='user'){ D.users=D.users.filter(u=>u.id!==id); logAct('USER_DELETED',id); }
+  pendingDel=null;
+  closeM('mConfirm');
+  saveData();
+  showToast('Record deleted','ok');
+}
+
+function unlockUser(id){
+  const u=D.users.find(x=>x.id===id); if(!u) return;
+  u.lockedUntil=null; u.failedAttempts=0;
+  logAct('USER_UNLOCKED',u.username);
+  saveData();
+  showToast('User unlocked','ok');
+}
+
+// ── CSV Export ──
+function expInvoices(){
+  const h=['Invoice #','Date','Account','Period','Amount','Discount','Amount Due','Paid','Balance','Due Date','Status','Remarks'];
+  const r=D.invoices.map(i=>[i.invoiceNo,i.date,accName(i.accountId),billingLabel(i),i.amount,i.discount||0,invDue(i),invPaid(i.id),invBalance(i),i.dueDate||'',invStatus(i),(i.remarks||'').replace(/"/g,'""')]);
+  dlCsv('stargas_invoices_',h,r);
+}
+function expPayments(){
+  const h=['OR #','Date','Account','Invoice','Cash','Advance','Total','Method','Reference','Recorded By'];
+  const r=D.payments.map(p=>{const i=getInv(p.invoiceId);const c=Number(p.cash)||0,a=Number(p.advance)||0;return[p.paymentNo,p.date,accName(p.accountId),i?i.invoiceNo:'',c,a,c+a,p.method,p.reference||'',p.recordedBy||''];});
+  dlCsv('stargas_payments_',h,r);
+}
+function dlCsv(pre,h,r){
+  const csv=[h,...r].map(row=>row.map(c=>`"${c}"`).join(',')).join('\n');
+  const a=document.createElement('a');
+  a.href=URL.createObjectURL(new Blob([csv],{type:'text/csv;charset=utf-8;'}));
+  a.download=pre+today()+'.csv'; a.click();
+}
+
+// ── Backup ──
+function doBackup(){
+  const a=document.createElement('a');
+  a.href=URL.createObjectURL(new Blob([JSON.stringify(D,null,2)],{type:'application/json'}));
+  a.download='stargas_backup_'+today()+'.json'; a.click();
+  showToast('Backup downloaded','ok');
+  logAct('BACKUP_EXPORT','Full backup');
+  saveData(false);
+}
+function doRestore(file){
+  const r=new FileReader();
+  r.onload=e=>{try{D=migrateData(JSON.parse(e.target.result));saveData();showToast('Restored successfully','ok');logAct('BACKUP_RESTORE','Data restored');}catch(err){showToast('Invalid backup file','err');}};
+  r.readAsText(file);
+}
+function doReset(){
+  if(!confirm('Reset ALL data to demo sample? Cannot be undone.')) return;
+  localStorage.removeItem(SK); D=seedData(); saveData();
+  showToast('Data reset','ok');
+}
+
+// ── Section nav ──
+function showSec(name){
+  document.querySelectorAll('.section').forEach(s=>s.classList.remove('active'));
+  document.getElementById('sec-'+name).classList.add('active');
+  document.querySelectorAll('.nav-item').forEach(b=>b.classList.toggle('active',b.dataset.sec===name));
+  document.getElementById('sidebar').classList.remove('open');
+  const titles={dashboard:'Dashboard',billing:'Billing — Invoices',collections:'Collections',accounts:'Account Receivables',advance:'Advance Payments',reports:'Reports & Tools',users:'User Management',access:'Access Log'};
+  document.getElementById('tbTitle').textContent=titles[name]||name;
+  if(name==='dashboard') renderDash();
+  if(name==='billing') renderBilling();
+  if(name==='collections') renderCollections();
+  if(name==='accounts') renderAccounts();
+  if(name==='reports') renderReports();
+  if(name==='users') renderUsers();
+  if(name==='access') renderAccess();
+}
+
+// ── Event wiring ──
+function wire(){
+  document.getElementById('btnLogin').addEventListener('click',tryLogin);
+  document.getElementById('lPassword').addEventListener('keydown',e=>{if(e.key==='Enter')tryLogin();});
+  document.getElementById('lUsername').addEventListener('keydown',e=>{if(e.key==='Enter')tryLogin();});
+  document.getElementById('btnEye').addEventListener('click',()=>{const i=document.getElementById('lPassword');i.type=i.type==='password'?'text':'password';});
+  document.getElementById('btnUEye').addEventListener('click',()=>{const i=document.getElementById('uPassword');i.type=i.type==='password'?'text':'password';});
+  document.getElementById('btnSignOut').addEventListener('click',doSignOut);
+  document.getElementById('menuBtn').addEventListener('click',()=>document.getElementById('sidebar').classList.toggle('open'));
+  document.querySelectorAll('.nav-item').forEach(b=>b.addEventListener('click',()=>showSec(b.dataset.sec)));
+  document.querySelectorAll('[data-close]').forEach(b=>b.addEventListener('click',()=>closeM(b.dataset.close)));
+  document.querySelectorAll('.modal-overlay').forEach(ov=>ov.addEventListener('click',e=>{if(e.target===ov)closeM(ov.id);}));
+  document.getElementById('dashYear').addEventListener('change',e=>{D.settings.dashYear=parseInt(e.target.value,10);saveData();});
+  document.getElementById('btnPrintDash').addEventListener('click',()=>window.print());
+  document.getElementById('qNewInv').addEventListener('click',()=>openInvModal());
+  document.getElementById('qNewPay').addEventListener('click',()=>openPayModal());
+  document.getElementById('btnAddInv').addEventListener('click',()=>openInvModal());
+  document.getElementById('btnAddPay').addEventListener('click',()=>openPayModal());
+  document.getElementById('btnExpInv').addEventListener('click',expInvoices);
+  document.getElementById('btnExpPay').addEventListener('click',expPayments);
+  document.getElementById('btnSaveInv').addEventListener('click',saveInvoice);
+  document.getElementById('btnSavePay').addEventListener('click',savePayment);
+  document.getElementById('btnPayFull').addEventListener('click',payFullBal);
+  document.getElementById('btnApplyAdv').addEventListener('click',applyAdvCredit);
+  document.getElementById('payInv').addEventListener('change',updatePayHint);
+  document.getElementById('invMonth').addEventListener('change',()=>{const y=parseInt(document.getElementById('invYear').value,10),m=parseInt(document.getElementById('invMonth').value,10);if(!document.getElementById('invEditId').value){document.getElementById('invDue').value=defaultDue(y,m);}});
+  document.getElementById('invYear').addEventListener('change',()=>{const y=parseInt(document.getElementById('invYear').value,10),m=parseInt(document.getElementById('invMonth').value,10);if(!document.getElementById('invEditId').value){document.getElementById('invNo').value=previewInvNo(y);document.getElementById('invDue').value=defaultDue(y,m);}});
+  ['invSearch','invStFilter','invYrFilter'].forEach(id=>{document.getElementById(id).addEventListener('input',renderBilling);document.getElementById(id).addEventListener('change',renderBilling);});
+  ['paySearch','payFrom','payTo'].forEach(id=>{document.getElementById(id).addEventListener('input',renderCollections);document.getElementById(id).addEventListener('change',renderCollections);});
+  document.getElementById('btnClearPay').addEventListener('click',()=>{['paySearch','payFrom','payTo'].forEach(id=>document.getElementById(id).value='');renderCollections();});
+  ['accSearch','accTypeFilter','accYrFilter'].forEach(id=>{document.getElementById(id).addEventListener('input',renderAccounts);document.getElementById(id).addEventListener('change',renderAccounts);});
+  document.getElementById('accessUserFilter').addEventListener('change',renderAccess);
+  document.getElementById('btnAddAcc').addEventListener('click',()=>openAccModal());
+  document.getElementById('btnSaveAcc').addEventListener('click',saveAccount);
+  document.getElementById('btnAddAdv').addEventListener('click',()=>openAdvModal());
+  document.getElementById('btnSaveAdv').addEventListener('click',saveAdvance);
+  document.getElementById('btnAddUser').addEventListener('click',()=>openUserModal());
+  document.getElementById('btnSaveUser').addEventListener('click',saveUser);
+  document.getElementById('btnConfirm').addEventListener('click',confirmDel);
+  document.getElementById('btnBackup').addEventListener('click',doBackup);
+  document.getElementById('btnReset').addEventListener('click',doReset);
+  document.getElementById('restoreInput').addEventListener('change',e=>{if(e.target.files[0]){doRestore(e.target.files[0]);}e.target.value='';});
+
+  // Delegated events
+  document.addEventListener('click',e=>{
+    let t;
+    if((t=e.target.closest('[data-edit-inv]'))) { openInvModal(t.dataset.editInv); return; }
+    if((t=e.target.closest('[data-view-inv]'))) { openInvModal(t.dataset.viewInv,true); return; }
+    if((t=e.target.closest('[data-pay-inv]'))) { openPayModal(null,t.dataset.payInv); return; }
+    if((t=e.target.closest('[data-print-inv]'))) { showInvPrint(t.dataset.printInv); return; }
+    if((t=e.target.closest('[data-dup-inv]'))) { dupInvoice(t.dataset.dupInv); return; }
+    if((t=e.target.closest('[data-del-inv]'))) { askDel('invoice',t.dataset.delInv,'invoice'); return; }
+    if((t=e.target.closest('[data-receipt-pay]'))) { showReceipt(t.dataset.receiptPay); return; }
+    if((t=e.target.closest('[data-edit-pay]'))) { openPayModal(t.dataset.editPay); return; }
+    if((t=e.target.closest('[data-del-pay]'))) { askDel('payment',t.dataset.delPay,'payment'); return; }
+    if((t=e.target.closest('[data-statement]'))) { openStatement(t.dataset.statement); return; }
+    if((t=e.target.closest('[data-edit-account]'))) { openAccModal(t.dataset.editAccount); return; }
+    if((t=e.target.closest('[data-del-account]'))) { askDel('account',t.dataset.delAccount,'account'); return; }
+    if((t=e.target.closest('[data-edit-adv]'))) { openAdvModal(t.dataset.editAdv); return; }
+    if((t=e.target.closest('[data-del-adv]'))) { askDel('adv',t.dataset.delAdv,'advance payment'); return; }
+    if((t=e.target.closest('[data-edit-user]'))) { openUserModal(t.dataset.editUser); return; }
+    if((t=e.target.closest('[data-del-user]'))) { askDel('user',t.dataset.delUser,'user account'); return; }
+    if((t=e.target.closest('[data-unlock-user]'))) { unlockUser(t.dataset.unlockUser); return; }
+  });
+}
+
+// ── Boot ──
+function boot(){
+  loadData();
+  populateYears();
+  populateMonths();
+  wire();
+  startClock();
+  if(D.session.auth&&D.session.user) showApp();
+  else showLogin();
+}
+boot();
+</script>
+</body>
+</html>
